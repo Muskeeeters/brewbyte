@@ -1,9 +1,11 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'pages/login_page.dart';
+import 'pages/signup_page.dart';
+import 'pages/home_page.dart';
+import 'pages/auth_gate.dart';
+import 'routes/app_routes.dart';
 
-final supabase = Supabase.instance.client;
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   const Supabaseurl = "https://gymogmvfclamqgexjkja.supabase.co";
@@ -23,6 +25,7 @@ class BrewByte extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Brew Byte',
+      home: const AuthGate(),
       theme: ThemeData(
         primarySwatch: Colors.yellow,
         visualDensity: VisualDensity.adaptivePlatformDensity,
@@ -42,101 +45,8 @@ class BrewByte extends StatelessWidget {
         '/':(context) => AuthGate(),
         '/login':(context)=>const LoginPage(),
         '/signup':(context) => SignupPage(),
-        '/home':(context) =>homePage(),
+        '/home':(context) =>HomePage(),
     
   });
 }}
 
-class AuthGate extends StatelessWidget {
-  const AuthGate({super.key});
-  @override
-  Widget build (BuildContext context) {
-    return StreamBuilder<AuthState>(stream: supabase.auth.onAuthStateChange,
-     builder: (context,snapshot){
-      if (snapshot.connectionState == ConnectionState.active){
-        final session = snapshot.data?.session;
-        if(session==null){
-          return const LoginPage();
-        } else{
-          return const Homepage();
-        }
-      }
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator(),),
-      );
-     },
-     
-     );
-
-  }}
-
-class LoginPage extends StatefulWidget {
-  const LoginPage({super.key})
-  @override
-  State<LoginPage> createState() => _LoginPageState();
-}
-
-class _LoginPageState extends State<LoginPage>{
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  bool _isLoading = false;
-
-  @override
-  void dispose(){
-    _emailController.dispose();
-    _passwordController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _signIn() async{
-    setState(() => _isLoading = true);
-    try{
-      await supabase.auth.signInWithPassword(email: _emailController.text.trim(), password: _passwordController.text.trim(),);
-
-    } on AuthException cath(e) {
-      if (mounted) {
-        _showSnackBar ('An unexpected error occured : $e ', isEroor:true);
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
-  }
-
-  void _showSnackBar(String message, {book isError = false}){
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message),
-      backgroundColor: isError? Colors.redAccent:Colors.green,),);
-  }
-
-  @override
-  Widget build(BuildContext context){
-    return Scaffold(appBar: AppBar(title:const Text('Login')),
-    body: Center(
-      child:SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(children: [mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Text('Welcome Back', style: TextStyle(fontSize:28,fontWeight:FontWeight.bold,color:Colors.blue),),
-          const SizedBox (height:32),
-          TExtFormField(controller: _emailController, decoration:const InputDecoration(labelText:'Email'),
-          keyboardType:TextInputType.emailAddress,
-          ),
-          const SizedBox(height:16),
-          TextFormField(
-            controller: _passwordController,
-            decoration:const InputDecoration(labelText:'Password'),
-            obscureText:true,
-          ),
-          const SizedBox(height:32),
-          _isLoading ? const CircularProgressIndicator() : ElevatedButton(onPressed:_signIn,child:const Text('Log In'),),
-          const SizedBox(height:24),
-          TextButton(
-            onPressed:()=>Navigator.of(context).pushNamed('/signup'),
-            child:const Text('Don\'t have an account? Sign Up'),
-          ),
-        ],),)
-    ),);
-  }
-}
