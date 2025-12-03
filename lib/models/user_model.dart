@@ -15,23 +15,21 @@ class UserModel {
     required this.role,
   });
 
-  factory UserModel.fromMap(Map<String,dynamic> map){
+  factory UserModel.fromSupabaseMap(Map<String,dynamic> map){
     return UserModel(id:map['id'],
                      fullName:map['full_name'],
                      email:map['email'],
-                     phoneNumber:map['phone'],
-                     regNumber:map['regNumber'],
+                     phoneNumber:map['phone_number'],
+                     regNumber:map['registerationNumber'],
                      role:map['role']
     );
   }
 
-  Map <String,dynamic> toMap() {
+  Map <String,dynamic> toSupabaseMap() {
     return {
-      'id':id,
       'full_name':fullName,
-      'email':email,
-      'phoneNumber':phoneNumber,
-      'regNumber':regNumber,
+      'phone_number':phoneNumber,
+      'registeration_number':regNumber,
       'role':role
     };
   }
