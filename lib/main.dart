@@ -93,11 +93,50 @@ class _LoginPageState extends State<LoginPage>{
     try{
       await supabase.auth.signInWithPassword(email: _emailController.text.trim(), password: _passwordController.text.trim(),);
 
-    } on AuthException cath(e) {}
+    } on AuthException cath(e) {
+      if (mounted) {
+        _showSnackBar ('An unexpected error occured : $e ', isEroor:true);
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
+  void _showSnackBar(String message, {book isError = false}){
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message),
+      backgroundColor: isError? Colors.redAccent:Colors.green,),);
+  }
 
-
-
-
+  @override
+  Widget build(BuildContext context){
+    return Scaffold(appBar: AppBar(title:const Text('Login')),
+    body: Center(
+      child:SingleChildScrollView(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(children: [mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text('Welcome Back', style: TextStyle(fontSize:28,fontWeight:FontWeight.bold,color:Colors.blue),),
+          const SizedBox (height:32),
+          TExtFormField(controller: _emailController, decoration:const InputDecoration(labelText:'Email'),
+          keyboardType:TextInputType.emailAddress,
+          ),
+          const SizedBox(height:16),
+          TextFormField(
+            controller: _passwordController,
+            decoration:const InputDecoration(labelText:'Password'),
+            obscureText:true,
+          ),
+          const SizedBox(height:32),
+          _isLoading ? const CircularProgressIndicator() : ElevatedButton(onPressed:_signIn,child:const Text('Log In'),),
+          const SizedBox(height:24),
+          TextButton(
+            onPressed:()=>Navigator.of(context).pushNamed('/signup'),
+            child:const Text('Don\'t have an account? Sign Up'),
+          ),
+        ],),)
+    ),);
+  }
 }
