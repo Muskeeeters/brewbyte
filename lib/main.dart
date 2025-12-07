@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'pages/auth_gate.dart';
 import 'routes/app_routes.dart';
+import 'screens/menu_screens/menu_list_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   const Supabaseurl = "https://gymogmvfclamqgexjkja.supabase.co";
