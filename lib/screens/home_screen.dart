@@ -81,16 +81,14 @@ class HomeScreen extends StatelessWidget {
               crossAxisSpacing: 16,
               mainAxisSpacing: 16,
               children: [
-                _DashboardCard(
-                  title: 'Manage Menu',
-                  icon: Icons.restaurant_menu,
-                  onTap: () {
-                    // TODO: Connect to Menu Screens
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Menu Management - Coming Soon')),
-                    );
-                  },
-                ),
+                if (user.role == 'manager')
+                  _DashboardCard(
+                    title: 'Manage Menu',
+                    icon: Icons.restaurant_menu,
+                    onTap: () {
+                      context.push('/menu_list');
+                    },
+                  ),
                 _DashboardCard(
                   title: 'New Order',
                   icon: Icons.add_shopping_cart,
