@@ -35,9 +35,9 @@ class BrewByte extends StatelessWidget {
             )
           )
         ),
-        
+      // home: const MenuListScreen(),    i do this for testing my modules
         initialRoute: '/',
-        routes: appRoutes,
+       routes: appRoutes,
         
   );
 }}

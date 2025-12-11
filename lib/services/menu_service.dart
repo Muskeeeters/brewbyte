@@ -1,40 +1,52 @@
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/menu_model.dart';
 import '../models/menu_item_model.dart';
 
 class MenuService {
-  // --- DUMMY DATA (Pehle se मौजूद data) ---
-  static List<MenuModel> menus = [
-    MenuModel(id: '1', name: 'Hot Coffees', description: 'Freshly brewed hot coffee'),
-    MenuModel(id: '2', name: 'Cold Drinks', description: 'Chilled beverages'),
-  ];
+  // Supabase Client ka instance
+  final _supabase = Supabase.instance.client;
 
-  static List<MenuItemModel> menuItems = [
-    MenuItemModel(id: '101', menuId: '1', name: 'Espresso', price: 300.0, description: 'Strong shot'),
-    MenuItemModel(id: '102', menuId: '1', name: 'Latte', price: 450.0, description: 'Milky coffee'),
-    MenuItemModel(id: '201', menuId: '2', name: 'Iced Tea', price: 250.0, description: 'Lemon flavor'),
-  ];
-
-  // --- CRUD OPERATIONS ---
+  // --- MENUS (Real DB Calls) ---
 
   // 1. Get all Menus
-  List<MenuModel> getMenus() {
-    return menus;
+  Future<List<MenuModel>> getMenus() async {
+    final response = await _supabase.from('menus').select();
+    
+    // Data ko List<MenuModel> mein convert karna
+    final data = response as List<dynamic>;
+    return data.map((json) => MenuModel.fromJson(json)).toList();
   }
 
   // 2. Add New Menu
-  void addMenu(MenuModel menu) {
-    menus.add(menu);
+  Future<void> addMenu(MenuModel menu) async {
+    await _supabase.from('menus').insert(menu.toJson());
   }
 
   // 3. Delete Menu
-  void deleteMenu(String id) {
-    menus.removeWhere((element) => element.id == id);
-    // Jab menu delete ho, uske items bhi delete hone chahiye
-    menuItems.removeWhere((element) => element.menuId == id);
+  Future<void> deleteMenu(String id) async {
+    await _supabase.from('menus').delete().eq('id', id);
   }
 
+  // --- MENU ITEMS (Real DB Calls) ---
+
   // 4. Get Items for a specific Menu
-  List<MenuItemModel> getItemsByMenu(String menuId) {
-    return menuItems.where((item) => item.menuId == menuId).toList();
+  Future<List<MenuItemModel>> getItemsByMenu(String menuId) async {
+    final response = await _supabase
+        .from('menu_items')
+        .select()
+        .eq('menu_id', menuId); // Filter by Menu ID
+
+    final data = response as List<dynamic>;
+    return data.map((json) => MenuItemModel.fromJson(json)).toList();
+  }
+  
+  // 5. Add Menu Item
+  Future<void> addMenuItem(MenuItemModel item) async {
+    await _supabase.from('menu_items').insert(item.toJson());
+  }
+
+  // 👇 6. Delete Menu Item (Ye Naya Function Hai)
+  Future<void> deleteMenuItem(String id) async {
+    await _supabase.from('menu_items').delete().eq('id', id);
   }
 }

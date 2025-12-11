@@ -14,18 +14,30 @@ class _AddMenuScreenState extends State<AddMenuScreen> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _descController = TextEditingController();
   final MenuService _menuService = MenuService();
+  bool _isLoading = false;
 
-  void _saveMenu() {
+  Future<void> _saveMenu() async {
     if (_formKey.currentState!.validate()) {
-      // Create new Menu Object
+      setState(() => _isLoading = true);
+
+      // ID hum nahi bhejenge, Supabase khud banayega
       final newMenu = MenuModel(
-        id: DateTime.now().millisecondsSinceEpoch.toString(), // Unique ID
         name: _nameController.text,
         description: _descController.text,
       );
 
-      _menuService.addMenu(newMenu);
-      Navigator.pop(context); // Go back to list
+      try {
+        await _menuService.addMenu(newMenu);
+        if (mounted) {
+           Navigator.pop(context); // Success, go back
+        }
+      } catch (e) {
+        if (mounted) {
+           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+        }
+      } finally {
+        if (mounted) setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -48,14 +60,15 @@ class _AddMenuScreenState extends State<AddMenuScreen> {
               TextFormField(
                 controller: _descController,
                 decoration: const InputDecoration(labelText: 'Description'),
-                validator: (value) => value!.isEmpty ? 'Please enter description' : null,
               ),
               const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _saveMenu,
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.brown, foregroundColor: Colors.white),
-                child: const Text("Save Menu"),
-              ),
+              _isLoading 
+                ? const CircularProgressIndicator()
+                : ElevatedButton(
+                    onPressed: _saveMenu,
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.brown, foregroundColor: Colors.white),
+                    child: const Text("Save to Database"),
+                  ),
             ],
           ),
         ),
