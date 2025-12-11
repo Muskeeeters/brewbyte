@@ -11,6 +11,9 @@ import '../pages/auth_gate.dart';
 import '../screens/home_screen.dart';
 import '../screens/profile_management_screen.dart';
 
+import '../screens/menu_screens/menu_list_screen.dart';
+import '../screens/menu_screens/add_menu_screen.dart';
+
 GoRouter createRouter(AuthBloc authBloc) {
   return GoRouter(
     initialLocation: '/',
@@ -59,6 +62,14 @@ GoRouter createRouter(AuthBloc authBloc) {
        GoRoute(
         path: '/profile_management',
         builder: (context, state) => const ProfileManagementScreen(),
+      ),
+      GoRoute(
+        path: '/menu_list',
+        builder: (context, state) => const MenuListScreen(),
+      ),
+      GoRoute(
+        path: '/add_menu',
+        builder: (context, state) => const AddMenuScreen(),
       ),
     ],
   );
