@@ -15,22 +15,27 @@ class UserModel {
     required this.role,
   });
 
-  factory UserModel.fromSupabaseMap(Map<String,dynamic> map){
-    return UserModel(id:map['id'],
-                     fullName:map['full_name'],
-                     email:map['email'],
-                     phoneNumber:map['phone_number'],
-                     regNumber:map['registerationNumber'],
-                     role:map['role']
+  factory UserModel.fromJson(Map<String, dynamic> json) {
+    return UserModel(
+      id: json['id'] as String,
+      fullName: json['full_name'] as String,
+      email: json['email'] as String,
+      phoneNumber: json['phone_number'] as String,
+      // Database has a typo: 'registeration_number'.
+      // Prioritizing the DB spelling, but keeping fallback just in case.
+      regNumber: (json['registeration_number'] ?? json['registration_number'] ?? '') as String,
+      role: json['role'] as String,
     );
   }
 
-  Map <String,dynamic> toSupabaseMap() {
+  Map<String, dynamic> toJson() {
     return {
-      'full_name':fullName,
-      'phone_number':phoneNumber,
-      'registeration_number':regNumber,
-      'role':role
+      'id': id,
+      'full_name': fullName,
+      'email': email,
+      'phone_number': phoneNumber,
+      'registeration_number': regNumber, // Matches DB typo
+      'role': role,
     };
   }
 }
