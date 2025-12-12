@@ -1,5 +1,5 @@
-
-
+import '../screens/order_screens/order_list_screen.dart';
+import '../screens/order_screens/create_order_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'dart:async';
@@ -29,7 +29,7 @@ GoRouter createRouter(AuthBloc authBloc) {
         // If not authenticated and trying to access protected routes (like home), redirect to login.
         // Allowing root '/' to go to AuthGate is fine, but if we want strictly /login:
         if (!isLoggingIn && !isSigningUp && !isRoot) {
-           return '/login';
+          return '/login';
         }
       }
 
@@ -43,23 +43,11 @@ GoRouter createRouter(AuthBloc authBloc) {
       return null;
     },
     routes: [
+      GoRoute(path: '/', builder: (context, state) => const AuthGate()),
+      GoRoute(path: '/login', builder: (context, state) => const LoginPage()),
+      GoRoute(path: '/signup', builder: (context, state) => const SignupPage()),
+      GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
       GoRoute(
-        path: '/',
-        builder: (context, state) => const AuthGate(),
-      ),
-      GoRoute(
-        path: '/login',
-        builder: (context, state) => const LoginPage(),
-      ),
-      GoRoute(
-        path: '/signup',
-        builder: (context, state) => const SignupPage(),
-      ),
-      GoRoute(
-        path: '/home',
-        builder: (context, state) => const HomeScreen(),
-      ),
-       GoRoute(
         path: '/profile_management',
         builder: (context, state) => const ProfileManagementScreen(),
       ),
@@ -70,6 +58,14 @@ GoRouter createRouter(AuthBloc authBloc) {
       GoRoute(
         path: '/add_menu',
         builder: (context, state) => const AddMenuScreen(),
+      ),
+      GoRoute(
+        path: '/orders',
+        builder: (context, state) => const OrderListScreen(),
+      ),
+      GoRoute(
+        path: '/create_order',
+        builder: (context, state) => const CreateOrderScreen(),
       ),
     ],
   );

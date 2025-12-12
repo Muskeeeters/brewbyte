@@ -3,13 +3,21 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../bloc/auth/auth_bloc.dart';
 
-
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final user = (context.read<AuthBloc>().state as AuthAuthenticated).user;
+    // 1. Safe Auth Check
+    final state = context.read<AuthBloc>().state;
+    
+    // Agar user login nahi hai ya data load ho raha hai
+    if (state is! AuthAuthenticated) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+    
+    final user = state.user;
+    final isManager = user.role == 'manager';
 
     return Scaffold(
       appBar: AppBar(
@@ -28,7 +36,7 @@ class HomeScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Greeting Section
+            // 2. Greeting Section (User Info)
             Container(
               padding: const EdgeInsets.all(24),
               width: double.infinity,
@@ -55,7 +63,7 @@ class HomeScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Your Role: ${user.role}',
+                    'Your Role: ${user.role}', // Manager or User
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           color: Colors.black54,
                           fontWeight: FontWeight.w600,
@@ -66,7 +74,7 @@ class HomeScreen extends StatelessWidget {
             ),
             const SizedBox(height: 32),
             
-            // Dashboard Grid
+            // 3. Dashboard Grid
             Text(
               'Quick Actions',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -81,7 +89,9 @@ class HomeScreen extends StatelessWidget {
               crossAxisSpacing: 16,
               mainAxisSpacing: 16,
               children: [
-                if (user.role == 'manager')
+                
+                // --- ITEM 1: Talal's Menu Module (Manager Only) ---
+                if (isManager)
                   _DashboardCard(
                     title: 'Manage Menu',
                     icon: Icons.restaurant_menu,
@@ -89,16 +99,39 @@ class HomeScreen extends StatelessWidget {
                       context.push('/menu_list');
                     },
                   ),
+
+                // --- ITEM 2: Logic Switch (Your Update) ---
+                // Agar Manager hai -> "Manage Orders" dikhao
+                // Agar User hai -> "New Order" dikhao
+                if (isManager)
+                  _DashboardCard(
+                    title: 'Manage Orders',
+                    icon: Icons.assignment_turned_in, // Checklist icon
+                    onTap: () {
+                      // Manager goes to list screen (with edit rights)
+                      context.push('/orders');
+                    },
+                  )
+                else
+                  _DashboardCard(
+                    title: 'New Order',
+                    icon: Icons.add_shopping_cart, // Cart icon
+                    onTap: () {
+                      // User goes to create order screen
+                      context.push('/create_order');
+                    },
+                  ),
+
+                // --- ITEM 3: Order History (Always Visible) ---
                 _DashboardCard(
-                  title: 'New Order',
-                  icon: Icons.add_shopping_cart,
+                  title: 'Order History',
+                  icon: Icons.receipt_long,
                   onTap: () {
-                    // TODO: Connect to Order Screens
-                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Order System - Coming Soon')),
-                    );
+                    context.push('/orders');
                   },
                 ),
+
+                // --- ITEM 4: View Profiles ---
                 _DashboardCard(
                   title: 'View Profiles',
                   icon: Icons.people,
@@ -106,6 +139,8 @@ class HomeScreen extends StatelessWidget {
                     context.push('/profile_management');
                   },
                 ),
+
+                // --- ITEM 5: Settings ---
                  _DashboardCard(
                   title: 'Settings',
                   icon: Icons.settings,
@@ -124,6 +159,7 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
+// 4. Reusable Dashboard Card Widget
 class _DashboardCard extends StatelessWidget {
   final String title;
   final IconData icon;
