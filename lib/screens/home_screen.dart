@@ -131,14 +131,24 @@ class HomeScreen extends StatelessWidget {
                   },
                 ),
 
-                // --- ITEM 4: View Profiles ---
+                // --- ITEM 4: My Profile (Always Visible) ---
                 _DashboardCard(
-                  title: 'View Profiles',
-                  icon: Icons.people,
+                  title: 'My Profile',
+                  icon: Icons.person,
                   onTap: () {
-                    context.push('/profile_management');
+                    context.push('/my-profile-edit');
                   },
                 ),
+
+                // --- ITEM 5: Manage Profiles (Manager Only) ---
+                if (isManager)
+                  _DashboardCard(
+                    title: 'Manage Profiles',
+                    icon: Icons.manage_accounts,
+                    onTap: () {
+                      context.push('/manage-profiles');
+                    },
+                  ),
 
                 // --- ITEM 5: Settings ---
                  _DashboardCard(

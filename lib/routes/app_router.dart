@@ -10,6 +10,8 @@ import '../pages/auth_gate.dart';
 
 import '../screens/home_screen.dart';
 import '../screens/profile_management_screen.dart';
+import '../screens/my_profile_edit_screen.dart';
+import '../screens/manage_all_profiles_screen.dart';
 
 import '../screens/menu_screens/menu_list_screen.dart';
 import '../screens/menu_screens/add_menu_screen.dart';
@@ -50,6 +52,14 @@ GoRouter createRouter(AuthBloc authBloc) {
       GoRoute(
         path: '/profile_management',
         builder: (context, state) => const ProfileManagementScreen(),
+      ),
+      GoRoute(
+        path: '/my-profile-edit', 
+        builder: (context, state) => const MyProfileEditScreen(),
+      ),
+      GoRoute(
+        path: '/manage-profiles',
+        builder: (context, state) => const ManageAllProfilesScreen(),
       ),
       GoRoute(
         path: '/menu_list',
