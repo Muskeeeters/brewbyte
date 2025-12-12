@@ -90,37 +90,26 @@ class HomeScreen extends StatelessWidget {
               mainAxisSpacing: 16,
               children: [
                 
-                // --- ITEM 1: Talal's Menu Module (Manager Only) ---
-                if (isManager)
-                  _DashboardCard(
-                    title: 'Manage Menu',
-                    icon: Icons.restaurant_menu,
-                    onTap: () {
-                      context.push('/menu_list');
-                    },
-                  ),
+                // --- ITEM 1: Menu (All Users) ---
+                // Manager sees "Manage Menu", others see "View Menu"
+                _DashboardCard(
+                  title: isManager ? 'Manage Menu' : 'View Menu',
+                  icon: Icons.restaurant_menu,
+                  onTap: () {
+                    context.push('/menu_list');
+                  },
+                ),
 
-                // --- ITEM 2: Logic Switch (Your Update) ---
-                // Agar Manager hai -> "Manage Orders" dikhao
-                // Agar User hai -> "New Order" dikhao
-                if (isManager)
-                  _DashboardCard(
-                    title: 'Manage Orders',
-                    icon: Icons.assignment_turned_in, // Checklist icon
-                    onTap: () {
-                      // Manager goes to list screen (with edit rights)
-                      context.push('/orders');
-                    },
-                  )
-                else
-                  _DashboardCard(
-                    title: 'New Order',
-                    icon: Icons.add_shopping_cart, // Cart icon
-                    onTap: () {
-                      // User goes to create order screen
-                      context.push('/create_order');
-                    },
-                  ),
+                // --- ITEM 2: Place Order (All Users) ---
+                // Replaces "Manage Orders" vs "New Order" logic. 
+                // Now everyone can place an order. Managers verify via Order History.
+                _DashboardCard(
+                  title: 'Place Order',
+                  icon: Icons.add_shopping_cart, 
+                  onTap: () {
+                    context.push('/create_order');
+                  },
+                ),
 
                 // --- ITEM 3: Order History (Always Visible) ---
                 _DashboardCard(
