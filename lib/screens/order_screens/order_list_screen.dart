@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart'; // Bloc import zaroori hai role check karne ke liye
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../services/order_service.dart';
 import '../../models/order_model.dart';
@@ -30,11 +30,14 @@ class _OrderListScreenState extends State<OrderListScreen> {
 
   // Status Change Dialog
   void _showStatusDialog(OrderModel order) {
+    // Dialog mein bhi short ID dikhayein taake consistent lage
+    final shortId = order.id.substring(0, 5).toUpperCase();
+    
     showDialog(
       context: context,
       builder: (context) {
         return SimpleDialog(
-          title: Text("Update Status for ${order.id}"),
+          title: Text("Update Status for #$shortId"),
           children: [
             _statusOption(order.id, "Pending", Colors.orange),
             _statusOption(order.id, "Preparing", Colors.blue),
@@ -79,7 +82,7 @@ class _OrderListScreenState extends State<OrderListScreen> {
 
     return Scaffold(
       appBar: AppBar(title: Text(isManager ? "Manage Orders" : "My Orders")),
-      // Sirf Non-Manager (User) ko create button dikhana hai, ya agar manager create bhi kar sake to ise rakhein
+      // Sirf Non-Manager (User) ko create button dikhana hai
       floatingActionButton: !isManager 
           ? FloatingActionButton(
               backgroundColor: const Color(0xFFFFC107),
@@ -89,7 +92,7 @@ class _OrderListScreenState extends State<OrderListScreen> {
                 _refreshOrders();
               },
             )
-          : null, // Manager ko add button nahi milega (wo sirf manage karega)
+          : null, 
       
       body: FutureBuilder<List<OrderModel>>(
         future: _ordersFuture,
@@ -107,6 +110,11 @@ class _OrderListScreenState extends State<OrderListScreen> {
             padding: const EdgeInsets.all(16),
             itemBuilder: (context, index) {
               final order = orders[index];
+              
+              // Helper to Format Date Time nicely (e.g., 12:30)
+              final dt = order.createdAt;
+              final formattedTime = "${dt.day}/${dt.month} • ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}";
+
               return Card(
                 elevation: 2,
                 margin: const EdgeInsets.only(bottom: 12),
@@ -116,12 +124,27 @@ class _OrderListScreenState extends State<OrderListScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // --- HEADER ROW (Order ID + Status) ---
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(order.id, style: const TextStyle(fontWeight: FontWeight.bold)),
+                          // Left Side: Order ID & Date
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "ORDER #${order.id.substring(0, 5).toUpperCase()}", // Clean ID
+                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                formattedTime, // Date & Time
+                                style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                              ),
+                            ],
+                          ),
                           
-                          // Agar Manager hai to Button dikhaye, warna sirf Text
+                          // Right Side: Status Badge/Button
                           isManager 
                           ? InkWell(
                               onTap: () => _showStatusDialog(order),
@@ -164,13 +187,27 @@ class _OrderListScreenState extends State<OrderListScreen> {
                             ),
                         ],
                       ),
-                      const SizedBox(height: 8),
-                      ...order.items.map((item) => Text("${item.quantity}x ${item.name}")),
-                      const Divider(),
+                      
+                      const Divider(height: 24),
+                      
+                      // --- ORDER ITEMS LIST ---
+                      ...order.items.map((item) => Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 2.0),
+                        child: Row(
+                          children: [
+                            Text("${item.quantity}x ", style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFFFC107))),
+                            Text(item.name),
+                          ],
+                        ),
+                      )),
+                      
+                      const SizedBox(height: 12),
+                      
+                      // --- TOTAL AMOUNT ---
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text("Total", style: TextStyle(color: Colors.grey[600])),
+                          Text("Total Amount", style: TextStyle(color: Colors.grey[600])),
                           Text("PKR ${order.totalAmount}", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                         ],
                       ),
