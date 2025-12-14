@@ -16,31 +16,35 @@ class AddMenuItemScreen extends StatefulWidget {
 
 class _AddMenuItemScreenState extends State<AddMenuItemScreen> {
   final _formKey = GlobalKey<FormState>();
-  
+
   // Controllers
   final _nameController = TextEditingController();
   final _descController = TextEditingController();
   final _priceController = TextEditingController();
-  
+
   // Services
   final MenuService _menuService = MenuService();
   final UploadService _uploadService = UploadService();
-  
+
   bool _isLoading = false;
-  
+
   // Image Variables (Web Safe)
   XFile? _selectedXFile;
   Uint8List? _selectedImageBytes; // Preview ke liye
 
   // --- PICK IMAGE ---
   Future<void> _pickImage() async {
-    final XFile? picked = await _uploadService.pickImage();
-    if (picked != null) {
-      final bytes = await picked.readAsBytes(); // Bytes read karein
-      setState(() {
-        _selectedXFile = picked;
-        _selectedImageBytes = bytes;
-      });
+    try {
+      final XFile? picked = await _uploadService.pickImage();
+      if (picked != null) {
+        final bytes = await picked.readAsBytes(); // Bytes read karein
+        setState(() {
+          _selectedXFile = picked;
+          _selectedImageBytes = bytes;
+        });
+      }
+    } catch (e) {
+      debugPrint("Image pick error: $e");
     }
   }
 
@@ -51,15 +55,15 @@ class _AddMenuItemScreenState extends State<AddMenuItemScreen> {
 
       try {
         String? imageUrl;
-        
+
         // 1. Upload Image (Agar select ki hai)
         if (_selectedXFile != null) {
           imageUrl = await _uploadService.uploadImage(
-            _selectedXFile!, 
-            'image',     // ✅ Correct Bucket Name (small letters)
-            'menu_items' // Folder Name
-          );
-          
+              _selectedXFile!,
+              'image', // ✅ Bucket Name
+              'menu_items' // Folder Name
+              );
+
           if (imageUrl == null) throw Exception("Image upload failed");
         }
 
@@ -73,14 +77,24 @@ class _AddMenuItemScreenState extends State<AddMenuItemScreen> {
         );
 
         await _menuService.addMenuItem(newItem);
-        
+
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Item added successfully!')));
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Item added successfully!'),
+              backgroundColor: Colors.green,
+            ),
+          );
           Navigator.pop(context); // Wapis List par jao
         }
       } catch (e) {
         if (mounted) {
-           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
         }
       } finally {
         if (mounted) setState(() => _isLoading = false);
@@ -88,98 +102,176 @@ class _AddMenuItemScreenState extends State<AddMenuItemScreen> {
     }
   }
 
+  // UI Helper: Custom Input Decoration
+  InputDecoration _buildInputDecoration(String label, IconData icon) {
+    return InputDecoration(
+      labelText: label,
+      prefixIcon: Icon(icon, color: Colors.brown),
+      filled: true,
+      fillColor: Colors.white,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey.shade300),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey.shade300),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Colors.brown, width: 2),
+      ),
+      labelStyle: const TextStyle(color: Colors.grey),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Add New Item")),
+      backgroundColor: Colors.grey[50], // Light background
+      appBar: AppBar(
+        title: const Text("Add New Item"),
+        backgroundColor: Colors.brown,
+        foregroundColor: Colors.white,
+        centerTitle: true,
+        elevation: 0,
+      ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(20.0),
         child: Form(
           key: _formKey,
           child: SingleChildScrollView(
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // --- IMAGE UPLOAD BOX ---
-                InkWell(
-                  onTap: _pickImage,
-                  child: Container(
-                    height: 180,
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[200],
-                      border: Border.all(color: Colors.grey.shade400),
-                      borderRadius: BorderRadius.circular(12),
-                      image: _selectedImageBytes != null 
-                        ? DecorationImage(
-                            image: MemoryImage(_selectedImageBytes!), // ✅ Web Safe Image
-                            fit: BoxFit.cover
-                          )
-                        : null,
+                Center(
+                  child: InkWell(
+                    onTap: _pickImage,
+                    borderRadius: BorderRadius.circular(16),
+                    child: Container(
+                      height: 180,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: _selectedImageBytes != null
+                              ? Colors.brown
+                              : Colors.grey.shade300,
+                          width: 2,
+                        ),
+                        image: _selectedImageBytes != null
+                            ? DecorationImage(
+                                image: MemoryImage(_selectedImageBytes!),
+                                fit: BoxFit.cover,
+                              )
+                            : null,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: _selectedImageBytes == null
+                          ? Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.add_a_photo_outlined,
+                                    size: 50, color: Colors.brown.shade300),
+                                const SizedBox(height: 10),
+                                Text(
+                                  "Tap to upload image",
+                                  style: TextStyle(
+                                    color: Colors.grey[600],
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            )
+                          : Stack(
+                              children: [
+                                Positioned(
+                                  right: 10,
+                                  top: 10,
+                                  child: CircleAvatar(
+                                    backgroundColor: Colors.white,
+                                    radius: 18,
+                                    child: Icon(Icons.edit,
+                                        size: 18, color: Colors.brown),
+                                  ),
+                                ),
+                              ],
+                            ),
                     ),
-                    child: _selectedImageBytes == null
-                        ? const Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.add_a_photo, size: 50, color: Colors.grey),
-                              SizedBox(height: 8),
-                              Text("Tap to add food image", style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
-                            ],
-                          )
-                        : null,
                   ),
                 ),
-                const SizedBox(height: 20),
 
+                const SizedBox(height: 25),
+
+                // --- FORM FIELDS ---
                 // Name Field
                 TextFormField(
                   controller: _nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Item Name (e.g. Cappuccino)',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.fastfood),
-                  ),
-                  validator: (v) => v!.isEmpty ? 'Required' : null,
+                  decoration: _buildInputDecoration('Item Name', Icons.coffee),
+                  validator: (v) => v!.isEmpty ? 'Please enter a name' : null,
                 ),
                 const SizedBox(height: 16),
 
                 // Price Field
                 TextFormField(
                   controller: _priceController,
-                  decoration: const InputDecoration(
-                    labelText: 'Price (PKR)',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.attach_money),
-                  ),
+                  decoration:
+                      _buildInputDecoration('Price (PKR)', Icons.attach_money),
                   keyboardType: TextInputType.number,
-                  validator: (v) => v!.isEmpty ? 'Required' : null,
+                  validator: (v) {
+                    if (v == null || v.isEmpty) return 'Please enter price';
+                    if (double.tryParse(v) == null) return 'Invalid number';
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 16),
 
                 // Description Field
                 TextFormField(
                   controller: _descController,
-                  decoration: const InputDecoration(
-                    labelText: 'Description',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.description),
-                  ),
+                  decoration:
+                      _buildInputDecoration('Description', Icons.description),
                   maxLines: 3,
                 ),
                 const SizedBox(height: 30),
-                
-                // Save Button
+
+                // --- SAVE BUTTON ---
                 SizedBox(
-                  width: double.infinity,
-                  height: 50,
+                  height: 55,
                   child: ElevatedButton(
                     onPressed: _isLoading ? null : _saveItem,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFFC107), 
-                      foregroundColor: Colors.black
+                      backgroundColor: Colors.brown, // Theme Color
+                      foregroundColor: Colors.white,
+                      elevation: 2,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
-                    child: _isLoading 
-                      ? const CircularProgressIndicator() 
-                      : const Text("Save Item", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    child: _isLoading
+                        ? const SizedBox(
+                            height: 24,
+                            width: 24,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : const Text(
+                            "Save Item",
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                   ),
                 ),
               ],

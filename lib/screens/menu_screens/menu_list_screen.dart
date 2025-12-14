@@ -8,9 +8,9 @@ class MenuItemListScreen extends StatefulWidget {
   final String menuName;
 
   const MenuItemListScreen({
-    super.key, 
-    required this.menuId, 
-    required this.menuName
+    super.key,
+    required this.menuId,
+    required this.menuName,
   });
 
   @override
@@ -39,13 +39,15 @@ class _MenuItemListScreenState extends State<MenuItemListScreen> {
       _refreshItems();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Item deleted successfully')),
+          const SnackBar(
+              content: Text('Item deleted', style: TextStyle(color: Colors.white)),
+              backgroundColor: Colors.redAccent),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error deleting item: $e')),
+          SnackBar(content: Text('Error: $e')),
         );
       }
     }
@@ -54,14 +56,21 @@ class _MenuItemListScreenState extends State<MenuItemListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[100], // Thora light background for contrast
       appBar: AppBar(
-        title: Text(widget.menuName),
+        title: Text(
+          widget.menuName,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        centerTitle: true,
         backgroundColor: Colors.brown,
         foregroundColor: Colors.white,
+        elevation: 0,
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton.extended(
         backgroundColor: Colors.brown,
-        child: const Icon(Icons.add, color: Colors.white),
+        icon: const Icon(Icons.add, color: Colors.white),
+        label: const Text("Add Item", style: TextStyle(color: Colors.white)),
         onPressed: () async {
           await Navigator.push(
             context,
@@ -76,88 +85,138 @@ class _MenuItemListScreenState extends State<MenuItemListScreen> {
         future: _itemsFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(child: CircularProgressIndicator(color: Colors.brown));
           } else if (snapshot.hasError) {
             return Center(child: Text("Error: ${snapshot.error}"));
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text("No items found. Add some!"));
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.fastfood_outlined, size: 80, color: Colors.grey[400]),
+                  const SizedBox(height: 10),
+                  Text(
+                    "No items yet.",
+                    style: TextStyle(color: Colors.grey[600], fontSize: 16),
+                  ),
+                ],
+              ),
+            );
           }
 
           final items = snapshot.data!;
           return ListView.builder(
             itemCount: items.length,
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
             itemBuilder: (context, index) {
               final item = items[index];
-              
-              // Check agar image URL hai
-              final bool hasImage = item.imageUrl != null && item.imageUrl!.isNotEmpty;
+              final bool hasImage =
+                  item.imageUrl != null && item.imageUrl!.isNotEmpty;
 
-              return Card(
-                elevation: 3,
-                margin: const EdgeInsets.symmetric(vertical: 8),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8.0),
-                  child: ListTile(
-                    // ⭐ NEW: Image Section
-                    leading: Container(
-                      width: 60,
-                      height: 60,
-                      decoration: BoxDecoration(
+              return Container(
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // 🖼️ LEFT SIDE: IMAGE
+                    ClipRRect(
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(16),
+                        bottomLeft: Radius.circular(16),
+                      ),
+                      child: Container(
+                        width: 100,
+                        height: 100, // Fixed height for consistency
                         color: Colors.grey[200],
-                        borderRadius: BorderRadius.circular(8),
-                        image: hasImage 
-                          ? DecorationImage(
-                              image: NetworkImage(item.imageUrl!),
-                              fit: BoxFit.cover,
-                            )
-                          : null,
-                      ),
-                      child: !hasImage
-                          ? const Icon(Icons.fastfood, color: Colors.grey)
-                          : null,
-                    ),
-
-                    // Title & Description
-                    title: Text(
-                      item.name, 
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)
-                    ),
-                    subtitle: Padding(
-                      padding: const EdgeInsets.only(top: 4.0),
-                      child: Text(
-                        item.description,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                        child: hasImage
+                            ? Image.network(
+                                item.imageUrl!,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    const Icon(Icons.broken_image, color: Colors.grey),
+                              )
+                            : Icon(Icons.fastfood,
+                                size: 40, color: Colors.brown[300]),
                       ),
                     ),
 
-                    // Price & Delete
-                    trailing: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          "Rs ${item.price.toInt()}",
-                          style: const TextStyle(
-                            color: Colors.green, 
-                            fontWeight: FontWeight.bold, 
-                            fontSize: 15
-                          ),
+                    // 📝 MIDDLE: DETAILS
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.all(12.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Item Name
+                                Expanded(
+                                  child: Text(
+                                    item.name,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                      color: Colors.black87,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                // Delete Icon (Small & Subtle)
+                                InkWell(
+                                  onTap: () => _deleteItem(item.id!),
+                                  child: const Icon(
+                                    Icons.delete_outline,
+                                    color: Colors.redAccent,
+                                    size: 20,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            
+                            const SizedBox(height: 4),
+                            
+                            // Description
+                            Text(
+                              item.description,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontSize: 12,
+                                height: 1.2,
+                              ),
+                            ),
+                            
+                            const SizedBox(height: 8),
+
+                            // Price Tag
+                            Text(
+                              "Rs ${item.price.toInt()}",
+                              style: const TextStyle(
+                                color: Colors.green,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ],
                         ),
-                        // Delete Icon (Thora chota kiya taake fit aaye)
-                        InkWell(
-                          onTap: () => _deleteItem(item.id!),
-                          child: const Padding(
-                            padding: EdgeInsets.only(top: 8.0, left: 10),
-                            child: Icon(Icons.delete, color: Colors.red, size: 20),
-                          ),
-                        )
-                      ],
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               );
             },
