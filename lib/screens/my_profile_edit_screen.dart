@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'dart:typed_data'; // Bytes
+import 'package:image_picker/image_picker.dart'; // XFile
 import '../models/user_model.dart';
 import '../bloc/auth/auth_bloc.dart';
 import '../services/user_service.dart';
+import '../services/upload_service.dart';
 
 class MyProfileEditScreen extends StatefulWidget {
   const MyProfileEditScreen({super.key});
@@ -13,7 +16,8 @@ class MyProfileEditScreen extends StatefulWidget {
 
 class _MyProfileEditScreenState extends State<MyProfileEditScreen> {
   final _formKey = GlobalKey<FormState>();
-  
+  final _uploadService = UploadService();
+
   late TextEditingController _nameController;
   late TextEditingController _phoneController;
   late TextEditingController _emailController;
@@ -22,17 +26,25 @@ class _MyProfileEditScreenState extends State<MyProfileEditScreen> {
 
   bool _isLoading = false;
 
+  // Image Variables
+  XFile? _selectedXFile;
+  Uint8List? _selectedImageBytes;
+  String? _currentImageUrl;
+
   @override
   void initState() {
     super.initState();
     final user = (context.read<AuthBloc>().state as AuthAuthenticated).user;
-    
+
     _nameController = TextEditingController(text: user.fullName);
     _phoneController = TextEditingController(text: user.phoneNumber);
-    // Read-only fields
     _emailController = TextEditingController(text: user.email);
     _regNumController = TextEditingController(text: user.regNumber);
     _roleController = TextEditingController(text: user.role);
+
+    setState(() {
+      _currentImageUrl = user.imageUrl;
+    });
   }
 
   @override
@@ -45,70 +57,149 @@ class _MyProfileEditScreenState extends State<MyProfileEditScreen> {
     super.dispose();
   }
 
+  Future<void> _pickImage() async {
+    final XFile? picked = await _uploadService.pickImage();
+    if (picked != null) {
+      final bytes = await picked.readAsBytes();
+      setState(() {
+        _selectedXFile = picked;
+        _selectedImageBytes = bytes;
+      });
+    }
+  }
+
   Future<void> _saveProfile() async {
     if (!_formKey.currentState!.validate()) return;
+
+    final authBloc = context.read<AuthBloc>();
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final currentUser = (authBloc.state as AuthAuthenticated).user;
 
     setState(() => _isLoading = true);
 
     try {
-      final user = (context.read<AuthBloc>().state as AuthAuthenticated).user;
+      String? newImageUrl;
 
+      // 1. Agar nayi image select ki hai
+      if (_selectedXFile != null) {
+        // A. Purani Image Delete karein (Agar hai to)
+        if (_currentImageUrl != null && _currentImageUrl!.isNotEmpty) {
+          await _uploadService.deleteFile(
+            'image', // Correct Bucket Name
+            'profiles',
+            _currentImageUrl!,
+          );
+        }
+
+        // B. Nayi Upload karein
+        newImageUrl = await _uploadService.uploadImage(
+          _selectedXFile!,
+          'image', // Correct Bucket Name
+          'profiles',
+        );
+
+        if (newImageUrl == null) throw Exception("Upload returned null.");
+      }
+
+      // 2. Database Update
       await UserService.updateSelfProfile(
-        userId: user.id,
+        userId: currentUser.id,
         fullName: _nameController.text.trim(),
         phoneNumber: _phoneController.text.trim(),
+        imageUrl: newImageUrl,
       );
 
-      // Refresh Auth Bloc to update UI globally (Home Screen greeting etc)
-      // Ideally we would emit an event to re-fetch profile, or manually update it.
-      // For now, let's show success message. The Home Screen might need a refresh logic 
-      // or we can manually update the bloc state if AuthBloc supports it.
-      // Assuming AuthBloc might need a "ProfileUpdated" event in future, 
-      // but for this task scope, let's just save to DB. 
-      // To reflect changes immediately, we can re-trigger a fetch if we had a LoadUser event.
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profile updated successfully')),
-        );
-        Navigator.pop(context); // Go back after save
-      }
+      // 3. Success Steps
+      authBloc.add(AuthRefreshRequested()); // <--- YE ZAROORI HAI
+
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Profile updated successfully')),
+      );
+      navigator.pop();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error updating profile: $e')),
-        );
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    ImageProvider? getImageProvider() {
+      if (_selectedImageBytes != null) {
+        return MemoryImage(_selectedImageBytes!); // Preview new
+      }
+      if (_currentImageUrl != null && _currentImageUrl!.isNotEmpty) {
+        return NetworkImage(_currentImageUrl!); // Show old
+      }
+      return null;
+    }
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('My Profile'),
-      ),
+      appBar: AppBar(title: const Text('My Profile')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
           child: Column(
             children: [
+              Center(
+                child: Stack(
+                  children: [
+                    CircleAvatar(
+                      radius: 60,
+                      backgroundColor: Colors.grey[300],
+                      backgroundImage: getImageProvider(),
+                      child: getImageProvider() == null
+                          ? const Icon(
+                              Icons.person,
+                              size: 60,
+                              color: Colors.grey,
+                            )
+                          : null,
+                    ),
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: InkWell(
+                        onTap: _pickImage,
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).primaryColor,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2),
+                          ),
+                          child: const Icon(
+                            Icons.camera_alt,
+                            color: Colors.black,
+                            size: 20,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 30),
+
               _buildReadOnlyField("Email", _emailController),
               const SizedBox(height: 16),
               _buildReadOnlyField("Role", _roleController),
               const SizedBox(height: 16),
               _buildReadOnlyField("Registration Number", _regNumController),
               const SizedBox(height: 32),
-              
+
               const Text(
                 "Editable Information",
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16),
-              
+
               TextFormField(
                 controller: _nameController,
                 decoration: const InputDecoration(
@@ -116,11 +207,10 @@ class _MyProfileEditScreenState extends State<MyProfileEditScreen> {
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.person),
                 ),
-                validator: (value) => 
-                  value == null || value.isEmpty ? 'Please enter your name' : null,
+                validator: (value) => value!.isEmpty ? 'Enter name' : null,
               ),
               const SizedBox(height: 16),
-              
+
               TextFormField(
                 controller: _phoneController,
                 decoration: const InputDecoration(
@@ -128,11 +218,10 @@ class _MyProfileEditScreenState extends State<MyProfileEditScreen> {
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.phone),
                 ),
-                validator: (value) => 
-                  value == null || value.isEmpty ? 'Please enter your phone number' : null,
+                validator: (value) => value!.isEmpty ? 'Enter phone' : null,
               ),
               const SizedBox(height: 32),
-              
+
               SizedBox(
                 width: double.infinity,
                 height: 50,
@@ -142,9 +231,15 @@ class _MyProfileEditScreenState extends State<MyProfileEditScreen> {
                     backgroundColor: Theme.of(context).primaryColor,
                     foregroundColor: Colors.black,
                   ),
-                  child: _isLoading 
-                    ? const CircularProgressIndicator()
-                    : const Text('Save Changes', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  child: _isLoading
+                      ? const CircularProgressIndicator()
+                      : const Text(
+                          'Save Changes',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                 ),
               ),
             ],

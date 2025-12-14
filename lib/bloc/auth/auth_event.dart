@@ -4,10 +4,12 @@ abstract class AuthEvent {}
 
 class AuthCheckStatus extends AuthEvent {}
 
+// ⭐ NEW EVENT: To refresh user data without logging out
+class AuthRefreshRequested extends AuthEvent {} 
+
 class AuthLoginRequested extends AuthEvent {
   final String email;
   final String password;
-
   AuthLoginRequested({required this.email, required this.password});
 }
 

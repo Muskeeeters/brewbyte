@@ -5,6 +5,7 @@ class UserModel {
   final String phoneNumber;
   final String regNumber;
   final String role;
+  final String? imageUrl; // 🆕 Added this field
 
   UserModel({
     required this.id,
@@ -13,6 +14,7 @@ class UserModel {
     required this.phoneNumber,
     required this.regNumber,
     required this.role,
+    this.imageUrl, // 🆕 Added to constructor
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -21,10 +23,10 @@ class UserModel {
       fullName: json['full_name'] as String,
       email: json['email'] as String,
       phoneNumber: json['phone_number'] as String,
-      // Database has a typo: 'registeration_number'.
-      // Prioritizing the DB spelling, but keeping fallback just in case.
+      // Database typo handling preserved
       regNumber: (json['registeration_number'] ?? json['registration_number'] ?? '') as String,
       role: json['role'] as String,
+      imageUrl: json['image_url'] as String?, // 🆕 Map from DB
     );
   }
 
@@ -34,8 +36,9 @@ class UserModel {
       'full_name': fullName,
       'email': email,
       'phone_number': phoneNumber,
-      'registeration_number': regNumber, // Matches DB typo
+      'registeration_number': regNumber,
       'role': role,
+      'image_url': imageUrl, // 🆕 Send to DB
     };
   }
 }

@@ -1,0 +1,81 @@
+brewbyte/
+├─ analysis_options.yaml
+├─ README.md
+├─ pubspec.yaml
+├─ brewbyte.iml
+├─ .gitignore
+├─ .metadata
+├─ .idea/
+│  ├─ workspace.xml
+│  ├─ modules.xml
+│  ├─ runConfigurations/main_dart.xml
+│  └─ libraries/
+│     ├─ Dart_SDK.xml
+│     └─ KotlinJavaRuntime.xml
+├─ test/
+│  └─ widget_test.dart
+├─ web/
+│  ├─ index.html
+│  ├─ manifest.json
+│  ├─ favicon.png
+brewbyte/
+├─ lib/
+│  ├─ main.dart
+│  ├─ models/
+│  │  ├─ user_model.dart
+│  │  ├─ order_model.dart
+│  │  ├─ order_item_model.dart
+│  │  ├─ menu_model.dart
+│  │  └─ menu_item_model.dart
+│  ├─ pages/
+│  │  ├─ auth_gate.dart
+│  │  ├─ home_page.dart
+│  │  ├─ login_page.dart
+│  │  ├─ signup_page.dart
+│  │  └─ login_page.dart
+│  ├─ routes/
+│  │  └─ app_router.dart
+│  ├─ screens/
+│  │  ├─ home_screen.dart
+│  │  ├─ login_screen.dart
+│  │  ├─ profile_screen.dart
+│  │  ├─ signup.dart
+│  │  ├─ profile_management_screen.dart
+│  │  ├─ my_profile_edit_screen.dart
+│  │  ├─ manage_all_profiles_screen.dart
+│  │  ├─ order_screens/
+│  │  │  ├─ order_list_screen.dart
+│  │  │  └─ create_order_screen.dart
+│  │  └─ menu_screens/
+│  │     ├─ menu_list_screen.dart
+│  │     ├─ menu_item_list_screen.dart
+│  │     ├─ add_menu_screen.dart
+│  │     └─ add_menu_item_screen.dart
+│  ├─ services/
+│  │  ├─ auth_service.dart
+│  │  ├─ user_service.dart
+│  │  ├─ menu_service.dart
+│  │  ├─ order_service.dart
+│  │  └─ upload_service.dart
+│  ├─ widgets/
+│  │  └─ custom_button.dart
+│  └─ bloc/
+│     └─ auth/
+│        ├─ auth_bloc.dart
+│        ├─ auth_event.dart
+│        └─ auth_state.dart
+├─ test/
+│  └─ widget_test.dart
+├─ web/
+│  └─ (no Dart files)
+├─ android/
+│  └─ (no Dart files)
+├─ ios/
+│  └─ (no Dart files)
+├─ macos/
+│  └─ (no Dart files)
+├─ linux/
+│  └─ (no Dart files)
+└─ windows/
+   └─ (no Dart files)
+│     ├─ GeneratedPluginRegistrant.h

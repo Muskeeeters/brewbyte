@@ -1,6 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/user_model.dart';
-import 'auth_service.dart'; // For AuthFailure exception re-use if needed, or define new one.
 
 class UserService {
   static final supabase = Supabase.instance.client;
@@ -20,10 +19,9 @@ class UserService {
     }
   }
 
-  // 2. Fetch All Profiles (Manager Only - logic handled in UI/Router guards, here data access only)
+  // 2. Fetch All Profiles
   static Future<List<UserModel>> fetchAllProfiles() async {
     try {
-      // Supabase returns a List<Map<String, dynamic>>
       final List<dynamic> data = await supabase
           .from('profiles')
           .select()
@@ -35,7 +33,7 @@ class UserService {
     }
   }
 
-  // 3. Update User Role (Manager Only)
+  // 3. Update User Role
   static Future<void> updateUserRole(String userId, String newRole) async {
     try {
       await supabase
@@ -47,17 +45,28 @@ class UserService {
     }
   }
 
-  // 4. Update Self Profile (Name, Phone)
+  // 4. Update Self Profile (FIXED: Ab ye Image URL accept karega)
   static Future<void> updateSelfProfile({
     required String userId,
     required String fullName,
     required String phoneNumber,
+    String? imageUrl, // <--- YE ADD KIYA HAI
   }) async {
     try {
-      await supabase.from('profiles').update({
+      // Data prepare karein
+      final Map<String, dynamic> updates = {
         'full_name': fullName,
         'phone_number': phoneNumber,
-      }).eq('id', userId);
+      };
+
+      // Agar Image URL aya hai, to usay bhi list mein daalein
+      if (imageUrl != null) {
+        updates['image_url'] = imageUrl;
+      }
+
+      // Supabase ko bhejein
+      await supabase.from('profiles').update(updates).eq('id', userId);
+      
     } catch (e) {
       throw Exception('Failed to update profile: $e');
     }

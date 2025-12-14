@@ -1,54 +1,47 @@
 import 'package:flutter/material.dart';
-import '../../models/menu_item_model.dart';
+import 'package:go_router/go_router.dart';
+import '../../models/menu_model.dart';
 import '../../services/menu_service.dart';
-import 'add_menu_item_screen.dart';
+// Note: Yahan MenuItemListScreen ka import nahi chahiye agar hum GoRouter path use kar rahe hain
+// Agar navigation direct kar rahe hain to chahiye, par router use ho raha hai.
 
-
-class MenuItemListScreen extends StatefulWidget {
-  final String menuId;
-  final String menuName;
-
-  const MenuItemListScreen({
-    super.key, 
-    required this.menuId, 
-    required this.menuName
-  });
+class MenuListScreen extends StatefulWidget {
+  const MenuListScreen({super.key});
 
   @override
-  State<MenuItemListScreen> createState() => _MenuItemListScreenState();
+  State<MenuListScreen> createState() => _MenuListScreenState();
 }
 
-class _MenuItemListScreenState extends State<MenuItemListScreen> {
+class _MenuListScreenState extends State<MenuListScreen> {
   final MenuService _menuService = MenuService();
-  late Future<List<MenuItemModel>> _itemsFuture;
+  late Future<List<MenuModel>> _menusFuture;
 
   @override
   void initState() {
     super.initState();
-    _refreshItems();
+    _refreshMenus();
   }
 
-  void _refreshItems() {
+  void _refreshMenus() {
     setState(() {
-      _itemsFuture = _menuService.getItemsByMenu(widget.menuId);
+      _menusFuture = _menuService.getMenus();
     });
   }
 
-  // 👇 Ye naya function hai Item Delete karne ke liye
-  Future<void> _deleteItem(String itemId) async {
+  Future<void> _deleteMenu(String id) async {
     try {
-      await _menuService.deleteMenuItem(itemId); // Service mein ye function hona chahiye
-      _refreshItems(); // List refresh karein
+      await _menuService.deleteMenu(id);
+      _refreshMenus();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Item deleted successfully')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text("Menu Deleted")));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error deleting item: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
   }
@@ -57,62 +50,81 @@ class _MenuItemListScreenState extends State<MenuItemListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.menuName),
+        title: const Text("Menu Categories"),
         backgroundColor: Colors.brown,
         foregroundColor: Colors.white,
       ),
+      // Sirf Manager naya Menu bana sake
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.brown,
         child: const Icon(Icons.add, color: Colors.white),
         onPressed: () async {
-          await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => AddMenuItemScreen(menuId: widget.menuId),
-            ),
-          );
-          _refreshItems();
+          await context.push('/add_menu');
+          _refreshMenus();
         },
       ),
-      body: FutureBuilder<List<MenuItemModel>>(
-        future: _itemsFuture,
+      body: FutureBuilder<List<MenuModel>>(
+        future: _menusFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
+          }
+          if (snapshot.hasError) {
             return Center(child: Text("Error: ${snapshot.error}"));
-          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text("No items found. Add some!"));
+          }
+          if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(child: Text("No menus found. Add one!"));
           }
 
-          final items = snapshot.data!;
+          final menus = snapshot.data!;
           return ListView.builder(
-            itemCount: items.length,
+            padding: const EdgeInsets.all(16),
+            itemCount: menus.length,
             itemBuilder: (context, index) {
-              final item = items[index];
+              final menu = menus[index];
               return Card(
-                margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                child: ListTile(
-                  title: Text(item.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: Text(item.description),
-                  // 👇 Trailing mein Price aur Delete button dono laga diye
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        "Rs ${item.price.toInt()}",
-                        style: const TextStyle(
-                          color: Colors.green, 
-                          fontWeight: FontWeight.bold, 
-                          fontSize: 15
+                elevation: 4,
+                margin: const EdgeInsets.only(bottom: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: InkWell(
+                  // ⭐ Jab Menu pe click ho -> Items ki screen khule
+                  onTap: () {
+                    context.push(
+                      '/menu_items',
+                      extra: {'menuId': menu.id, 'menuName': menu.name},
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(12),
+                  child: Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              menu.name,
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            if (menu.description.isNotEmpty)
+                              Text(
+                                menu.description,
+                                style: TextStyle(color: Colors.grey[600]),
+                              ),
+                          ],
                         ),
-                      ),
-                      const SizedBox(width: 10),
-                      IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () => _deleteItem(item.id!),
-                      ),
-                    ],
+                        IconButton(
+                          icon: const Icon(Icons.delete, color: Colors.red),
+                          onPressed: () => _deleteMenu(menu.id!),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               );

@@ -1,34 +1,35 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../services/auth_service.dart';
-import '../../models/user_model.dart';
+import '../../models/user_model.dart'; // Import Zaroori hai
 
 part 'auth_event.dart';
 part 'auth_state.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
-  // Can be injected, but using static service as per current codebase style
-  
   AuthBloc() : super(AuthInitial()) {
     on<AuthCheckStatus>(_onCheckStatus);
     on<AuthLoginRequested>(_onLogin);
     on<AuthSignUpRequested>(_onSignUp);
     on<AuthLogoutRequested>(_onLogout);
+    on<AuthRefreshRequested>(_onRefresh); // ⭐ New Handler
   }
 
-  Future<void> _onCheckStatus(AuthCheckStatus event, Emitter<AuthState> emit) async {
+  // App Start / Reload Handler
+  Future<void> _onCheckStatus(
+    AuthCheckStatus event,
+    Emitter<AuthState> emit,
+  ) async {
     final session = AuthService.supabase.auth.currentSession;
     if (session != null) {
       try {
-        final data = await AuthService.supabase
-            .from('profiles')
-            .select()
-            .eq('id', session.user.id)
-            .single();
-        final user = UserModel.fromJson(data);
-        emit(AuthAuthenticated(user: user));
+        // Centralized method use kar rahe hain
+        final user = await AuthService.getCurrentProfile();
+        if (user != null) {
+          emit(AuthAuthenticated(user: user));
+        } else {
+          emit(AuthError("Profile not found"));
+        }
       } catch (e) {
-        // If profile fetch fails, treating as unauthenticated or error?
-        // Let's treat as unauthenticated for safety, or error.
         emit(AuthError("Failed to fetch user profile: $e"));
       }
     } else {
@@ -36,22 +37,47 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     }
   }
 
-  Future<void> _onLogin(AuthLoginRequested event, Emitter<AuthState> emit) async {
+  // ⭐ New Handler: Jab Profile Edit ho jaye to UI update karo
+  Future<void> _onRefresh(
+    AuthRefreshRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    try {
+      // 1. Chota sa delay dein taake Database update complete ho jaye
+      await Future.delayed(const Duration(milliseconds: 500));
+
+      // 2. Ab naya data maangein
+      final user = await AuthService.getCurrentProfile();
+
+      if (user != null) {
+        print("DEBUG: AuthBloc Refreshed! New Image: ${user.imageUrl}");
+        // 3. UI Update karein
+        emit(AuthAuthenticated(user: user));
+      }
+    } catch (e) {
+      print("Refresh failed: $e");
+    }
+  }
+
+  Future<void> _onLogin(
+    AuthLoginRequested event,
+    Emitter<AuthState> emit,
+  ) async {
     emit(AuthLoading());
     try {
       final user = await AuthService.signIn(event.email, event.password);
-      print("AuthBloc Login Success: ${user.email}");
       emit(AuthAuthenticated(user: user));
     } on AuthFailure catch (e) {
-      print("AuthBloc Login Error (AuthFailure): ${e.message}");
       emit(AuthError(e.message));
     } catch (e) {
-      print("AuthBloc Login Error (Unknown): $e");
       emit(AuthError("An unexpected error occurred: $e"));
     }
   }
 
-  Future<void> _onSignUp(AuthSignUpRequested event, Emitter<AuthState> emit) async {
+  Future<void> _onSignUp(
+    AuthSignUpRequested event,
+    Emitter<AuthState> emit,
+  ) async {
     emit(AuthLoading());
     try {
       await AuthService.signUp(
@@ -62,25 +88,23 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         role: event.role,
         password: event.password,
       );
-      // Assuming auto-login after signup
-      final user = AuthService.supabase.auth.currentUser;
+
+      // Signup ke baad auto-login (profile fetch)
+      final user = await AuthService.getCurrentProfile();
       if (user != null) {
-        // Fetch profile to emit authenticated state
-        final data = await AuthService.supabase
-            .from('profiles')
-            .select()
-            .eq('id', user.id)
-            .single();
-        emit(AuthAuthenticated(user: UserModel.fromJson(data)));
+        emit(AuthAuthenticated(user: user));
       } else {
-        emit(AuthError("Signup successful. Please verify email if required."));
+        emit(AuthError("Signup successful but failed to load profile."));
       }
     } catch (e) {
       emit(AuthError(e.toString()));
     }
   }
 
-  Future<void> _onLogout(AuthLogoutRequested event, Emitter<AuthState> emit) async {
+  Future<void> _onLogout(
+    AuthLogoutRequested event,
+    Emitter<AuthState> emit,
+  ) async {
     emit(AuthLoading());
     try {
       await AuthService.signOut();

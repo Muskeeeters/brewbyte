@@ -4,6 +4,7 @@ class MenuItemModel {
   final String name;
   final double price;
   final String description;
+  final String? imageUrl; // 🆕 Added this field
 
   MenuItemModel({
     this.id,
@@ -11,15 +12,17 @@ class MenuItemModel {
     required this.name,
     required this.price,
     required this.description,
+    this.imageUrl, // 🆕 Added to constructor
   });
 
   factory MenuItemModel.fromJson(Map<String, dynamic> json) {
     return MenuItemModel(
       id: json['id'],
-      menuId: json['menu_id'], // Database column name match hona chahiye
+      menuId: json['menu_id'],
       name: json['name'],
-      price: double.parse(json['price'].toString()), // Safe conversion
+      price: double.parse(json['price'].toString()),
       description: json['description'] ?? '',
+      imageUrl: json['image_url'], // 🆕 Map from DB
     );
   }
 
@@ -29,6 +32,7 @@ class MenuItemModel {
       'name': name,
       'price': price,
       'description': description,
+      'image_url': imageUrl, // 🆕 Send to DB
     };
   }
 }

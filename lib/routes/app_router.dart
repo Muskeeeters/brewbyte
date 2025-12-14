@@ -1,20 +1,27 @@
-import '../screens/order_screens/order_list_screen.dart';
-import '../screens/order_screens/create_order_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'dart:async';
+
+// Auth & Pages
 import '../bloc/auth/auth_bloc.dart';
 import '../pages/login_page.dart';
 import '../pages/signup_page.dart';
 import '../pages/auth_gate.dart';
 
+// Screens
 import '../screens/home_screen.dart';
 import '../screens/profile_management_screen.dart';
 import '../screens/my_profile_edit_screen.dart';
 import '../screens/manage_all_profiles_screen.dart';
 
+// Menu Screens
 import '../screens/menu_screens/menu_list_screen.dart';
 import '../screens/menu_screens/add_menu_screen.dart';
+import '../screens/menu_screens/menu_item_list_screen.dart'; // ✅ Import Added
+
+// Order Screens
+import '../screens/order_screens/order_list_screen.dart';
+import '../screens/order_screens/create_order_screen.dart';
 
 GoRouter createRouter(AuthBloc authBloc) {
   return GoRouter(
@@ -28,15 +35,12 @@ GoRouter createRouter(AuthBloc authBloc) {
       final isRoot = state.uri.toString() == '/';
 
       if (!isAuthenticated) {
-        // If not authenticated and trying to access protected routes (like home), redirect to login.
-        // Allowing root '/' to go to AuthGate is fine, but if we want strictly /login:
         if (!isLoggingIn && !isSigningUp && !isRoot) {
           return '/login';
         }
       }
 
       if (isAuthenticated) {
-        // If authenticated and trying to go to login or signup, redirect to home.
         if (isLoggingIn || isSigningUp || isRoot) {
           return '/home';
         }
@@ -49,6 +53,8 @@ GoRouter createRouter(AuthBloc authBloc) {
       GoRoute(path: '/login', builder: (context, state) => const LoginPage()),
       GoRoute(path: '/signup', builder: (context, state) => const SignupPage()),
       GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
+      
+      // Profiles
       GoRoute(
         path: '/profile_management',
         builder: (context, state) => const ProfileManagementScreen(),
@@ -61,6 +67,8 @@ GoRouter createRouter(AuthBloc authBloc) {
         path: '/manage-profiles',
         builder: (context, state) => const ManageAllProfilesScreen(),
       ),
+
+      // Menus (Categories)
       GoRoute(
         path: '/menu_list',
         builder: (context, state) => const MenuListScreen(),
@@ -69,6 +77,21 @@ GoRouter createRouter(AuthBloc authBloc) {
         path: '/add_menu',
         builder: (context, state) => const AddMenuScreen(),
       ),
+
+      // ⭐ NEW ROUTE: Items inside a Menu
+      GoRoute(
+        path: '/menu_items',
+        builder: (context, state) {
+          // Data jo humne push karte waqt 'extra' mein bheja tha
+          final args = state.extra as Map<String, dynamic>;
+          return MenuItemListScreen(
+            menuId: args['menuId'],
+            menuName: args['menuName'],
+          );
+        },
+      ),
+
+      // Orders
       GoRoute(
         path: '/orders',
         builder: (context, state) => const OrderListScreen(),

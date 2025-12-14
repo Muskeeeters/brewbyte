@@ -8,157 +8,200 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 1. Safe Auth Check
-    final state = context.read<AuthBloc>().state;
-    
-    // Agar user login nahi hai ya data load ho raha hai
-    if (state is! AuthAuthenticated) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
-    
-    final user = state.user;
-    final isManager = user.role == 'manager';
+    // ⭐ CHANGE: BlocBuilder lagaya hai taake update sun sake
+    return BlocBuilder<AuthBloc, AuthState>(
+      builder: (context, state) {
+        // Agar user login nahi hai ya data load ho raha hai
+        if (state is! AuthAuthenticated) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('BrewByte Dashboard'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () {
-              context.read<AuthBloc>().add(AuthLogoutRequested());
-            },
+        final user = state.user;
+        final isManager = user.role == 'manager';
+
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('BrewByte Dashboard'),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.logout),
+                onPressed: () {
+                  context.read<AuthBloc>().add(AuthLogoutRequested());
+                },
+              ),
+            ],
           ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 2. Greeting Section (User Info)
-            Container(
-              padding: const EdgeInsets.all(24),
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: Theme.of(context).primaryColor,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Hello, ${user.fullName}!',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Your Role: ${user.role}', // Manager or User
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: Colors.black54,
-                          fontWeight: FontWeight.w600,
-                        ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 32),
-            
-            // 3. Dashboard Grid
-            Text(
-              'Quick Actions',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-            const SizedBox(height: 16),
-            GridView.count(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisCount: 2,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
+          body: SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                
-                // --- ITEM 1: Menu (All Users) ---
-                // Manager sees "Manage Menu", others see "View Menu"
-                _DashboardCard(
-                  title: isManager ? 'Manage Menu' : 'View Menu',
-                  icon: Icons.restaurant_menu,
-                  onTap: () {
-                    context.push('/menu_list');
-                  },
-                ),
-
-                // --- ITEM 2: Place Order (All Users) ---
-                // Replaces "Manage Orders" vs "New Order" logic. 
-                // Now everyone can place an order. Managers verify via Order History.
-                _DashboardCard(
-                  title: 'Place Order',
-                  icon: Icons.add_shopping_cart, 
-                  onTap: () {
-                    context.push('/create_order');
-                  },
-                ),
-
-                // --- ITEM 3: Order History (Always Visible) ---
-                _DashboardCard(
-                  title: 'Order History',
-                  icon: Icons.receipt_long,
-                  onTap: () {
-                    context.push('/orders');
-                  },
-                ),
-
-                // --- ITEM 4: My Profile (Always Visible) ---
-                _DashboardCard(
-                  title: 'My Profile',
-                  icon: Icons.person,
-                  onTap: () {
-                    context.push('/my-profile-edit');
-                  },
-                ),
-
-                // --- ITEM 5: Manage Profiles (Manager Only) ---
-                if (isManager)
-                  _DashboardCard(
-                    title: 'Manage Profiles',
-                    icon: Icons.manage_accounts,
-                    onTap: () {
-                      context.push('/manage-profiles');
-                    },
+                // 2. Greeting Section (User Info + PICTURE)
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).primaryColor,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
+                  child: Row(
+                    children: [
+                      // --- PROFILE PICTURE ---
+                      Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2),
+                        ),
+                        child: CircleAvatar(
+                          radius: 30, // Size
+                          backgroundColor: Colors.white.withOpacity(0.3),
+                          // Logic: Agar Image URL hai to wo dikhao, warna Initials
+                          backgroundImage:
+                              (user.imageUrl != null &&
+                                  user.imageUrl!.isNotEmpty)
+                              ? NetworkImage(user.imageUrl!)
+                              : null,
+                          child:
+                              (user.imageUrl == null || user.imageUrl!.isEmpty)
+                              ? Text(
+                                  user.fullName.isNotEmpty
+                                      ? user.fullName[0].toUpperCase()
+                                      : '?',
+                                  style: const TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black87,
+                                  ),
+                                )
+                              : null,
+                        ),
+                      ),
 
-                // --- ITEM 5: Settings ---
-                 _DashboardCard(
-                  title: 'Settings',
-                  icon: Icons.settings,
-                  onTap: () {
-                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Settings - Coming Soon')),
-                    );
-                  },
+                      const SizedBox(width: 16), // Gap
+                      // Name and Role
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Hello, ${user.fullName}!',
+                              style: Theme.of(context).textTheme.headlineSmall
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black87,
+                                    fontSize: 20,
+                                  ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Your Role: ${user.role}',
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(
+                                    color: Colors.black54,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 32),
+
+                // 3. Dashboard Grid
+                Text(
+                  'Quick Actions',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 16),
+                GridView.count(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                  children: [
+                    // --- ITEM 1: Menu ---
+                    _DashboardCard(
+                      title: isManager ? 'Manage Menu' : 'View Menu',
+                      icon: Icons.restaurant_menu,
+                      onTap: () {
+                        context.push('/menu_list');
+                      },
+                    ),
+
+                    // --- ITEM 2: Place Order ---
+                    _DashboardCard(
+                      title: 'Place Order',
+                      icon: Icons.add_shopping_cart,
+                      onTap: () {
+                        context.push('/create_order');
+                      },
+                    ),
+
+                    // --- ITEM 3: Order History ---
+                    _DashboardCard(
+                      title: 'Order History',
+                      icon: Icons.receipt_long,
+                      onTap: () {
+                        context.push('/orders');
+                      },
+                    ),
+
+                    // --- ITEM 4: My Profile ---
+                    _DashboardCard(
+                      title: 'My Profile',
+                      icon: Icons.person,
+                      onTap: () {
+                        context.push('/my-profile-edit');
+                      },
+                    ),
+
+                    // --- ITEM 5: Manage Profiles (Manager Only) ---
+                    if (isManager)
+                      _DashboardCard(
+                        title: 'Manage Profiles',
+                        icon: Icons.manage_accounts,
+                        onTap: () {
+                          context.push('/manage-profiles');
+                        },
+                      ),
+
+                    // --- ITEM 6: Settings ---
+                    _DashboardCard(
+                      title: 'Settings',
+                      icon: Icons.settings,
+                      onTap: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Settings - Coming Soon'),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }
 
-// 4. Reusable Dashboard Card Widget
 class _DashboardCard extends StatelessWidget {
   final String title;
   final IconData icon;
