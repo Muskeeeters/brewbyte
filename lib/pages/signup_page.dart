@@ -11,14 +11,22 @@ class SignupPage extends StatefulWidget {
 }
 
 class _SignupPageState extends State<SignupPage> {
+  // Global Key for Form Validation
+  final _formKey = GlobalKey<FormState>();
+
+  // Controllers
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _fullNameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _regNumberController = TextEditingController();
-  String _selectedRole = 'student'; // Default role
-  
-  final List<String> _roles = ['student', 'manager']; // Options from your schema
+  final _adminCodeController = TextEditingController();
+
+  String _selectedRole = 'student'; 
+  final List<String> _roles = ['student', 'manager'];
+
+  // Secret Key
+  static const String _managerSecretCode = "BREW2025";
 
   @override
   void dispose() {
@@ -27,17 +35,42 @@ class _SignupPageState extends State<SignupPage> {
     _fullNameController.dispose();
     _phoneController.dispose();
     _regNumberController.dispose();
+    _adminCodeController.dispose();
     super.dispose();
   }
 
   void _signUp() {
+    // 1. Run Validations (Red text dikhayega agar ghalat hua)
+    if (!_formKey.currentState!.validate()) {
+      return; 
+    }
+
+    // 2. Manager Security Check
+    if (_selectedRole == 'manager') {
+      if (_adminCodeController.text.trim() != _managerSecretCode) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Invalid Admin Code! You cannot sign up as Manager.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return; 
+      }
+    }
+
+    // 3. Logic: Manager ke liye Reg Number empty
+    final finalRegNumber = _selectedRole == 'student' 
+        ? _regNumberController.text.trim() 
+        : ''; 
+
+    // 4. Send Data
     context.read<AuthBloc>().add(AuthSignUpRequested(
-      fullName: _fullNameController.text,
-      email: _emailController.text,
-      phone: _phoneController.text,
-      regNumber: _regNumberController.text,
+      fullName: _fullNameController.text.trim(),
+      email: _emailController.text.trim(),
+      phone: _phoneController.text.trim(),
+      regNumber: finalRegNumber,
       role: _selectedRole,
-      password: _passwordController.text,
+      password: _passwordController.text.trim(),
     ));
   }
 
@@ -49,19 +82,13 @@ class _SignupPageState extends State<SignupPage> {
         listener: (context, state) {
           if (state is AuthAuthenticated) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Signup successful!'),
-                backgroundColor: Colors.green,
-              ),
+              const SnackBar(content: Text('Signup successful!'), backgroundColor: Colors.green),
             );
-            context.go('/home'); // Navigate to home
+            context.go('/home'); 
           }
           if (state is AuthError) {
              ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: Colors.redAccent,
-              ),
+              SnackBar(content: Text(state.message), backgroundColor: Colors.redAccent),
             );
           }
         },
@@ -73,74 +100,126 @@ class _SignupPageState extends State<SignupPage> {
           return Center(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                   const Text(
-                    'Create Your Account',
-                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.blue),
-                  ),
-                  const SizedBox(height: 32),
-                  // Auth Fields
-                  TextFormField(
-                    controller: _emailController,
-                    decoration: const InputDecoration(labelText: 'Email'),
-                    keyboardType: TextInputType.emailAddress,
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _passwordController,
-                    decoration: const InputDecoration(labelText: 'Password (Min 6 characters)'),
-                    obscureText: true,
-                  ),
-                  const SizedBox(height: 24),
-                  const Divider(),
-                  const SizedBox(height: 24),
-                  // Profile Fields
-                  TextFormField(
-                    controller: _fullNameController,
-                    decoration: const InputDecoration(labelText: 'Full Name'),
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _phoneController,
-                    decoration: const InputDecoration(labelText: 'Phone Number'),
-                    keyboardType: TextInputType.phone,
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _regNumberController,
-                    decoration: const InputDecoration(labelText: 'Registration Number'),
-                  ),
-                  const SizedBox(height: 16),
-                  DropdownButtonFormField<String>(
-                    value: _selectedRole,
-                    decoration: const InputDecoration(labelText: 'Role'),
-                    items: _roles.map((String role) {
-                      return DropdownMenuItem<String>(
-                        value: role,
-                        child: Text(role[0].toUpperCase() + role.substring(1)),
-                      );
-                    }).toList(),
-                    onChanged: (String? newValue) {
-                      if (newValue != null) {
-                        setState(() {
-                          _selectedRole = newValue;
-                        });
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 32),
-                  ElevatedButton(
-                      onPressed: _signUp,
-                      child: const Text('Sign Up and Create Profile'),
+              child: Form( // ✅ Form Widget Zaroori hai validation ke liye
+                key: _formKey,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                     const Text(
+                      'Create Your Account',
+                      style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.blue),
                     ),
-                  const SizedBox(height: 24),
-                  TextButton(
-                    onPressed: () => context.pop(), // Go back to login
-                    child: const Text('Already have an account? Log In'),
-                  ),
-                ],
+                    const SizedBox(height: 32),
+                    
+                    // --- Full Name ---
+                    TextFormField(
+                      controller: _fullNameController,
+                      decoration: const InputDecoration(labelText: 'Full Name', prefixIcon: Icon(Icons.person)),
+                      validator: (value) => (value == null || value.isEmpty) ? 'Full Name is required' : null,
+                    ),
+                    const SizedBox(height: 16),
+
+                    // --- Email (Validation Added) ---
+                    TextFormField(
+                      controller: _emailController,
+                      decoration: const InputDecoration(labelText: 'Email', prefixIcon: Icon(Icons.email)),
+                      keyboardType: TextInputType.emailAddress,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Email is required';
+                        }
+                        // Regex for Email Validation
+                        final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+                        if (!emailRegex.hasMatch(value)) {
+                          return 'Please enter a valid email (e.g. user@gmail.com)';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+
+                    // --- Phone ---
+                    TextFormField(
+                      controller: _phoneController,
+                      decoration: const InputDecoration(labelText: 'Phone Number', prefixIcon: Icon(Icons.phone)),
+                      keyboardType: TextInputType.phone,
+                      validator: (value) => (value == null || value.length < 10) ? 'Enter valid phone number' : null,
+                    ),
+                    const SizedBox(height: 16),
+                    
+                    // --- Role Dropdown ---
+                    DropdownButtonFormField<String>(
+                      value: _selectedRole,
+                      decoration: const InputDecoration(labelText: 'Role', prefixIcon: Icon(Icons.verified_user)),
+                      items: _roles.map((String role) {
+                        return DropdownMenuItem<String>(
+                          value: role,
+                          child: Text(role[0].toUpperCase() + role.substring(1)),
+                        );
+                      }).toList(),
+                      onChanged: (String? newValue) {
+                        if (newValue != null) {
+                          setState(() {
+                            _selectedRole = newValue;
+                          });
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 16),
+
+                    // --- Conditional Fields ---
+                    if (_selectedRole == 'student')
+                      TextFormField(
+                        controller: _regNumberController,
+                        decoration: const InputDecoration(labelText: 'Registration Number', prefixIcon: Icon(Icons.badge)),
+                        validator: (value) => (value == null || value.isEmpty) ? 'Registration Number required' : null,
+                      ),
+
+                    if (_selectedRole == 'manager')
+                      TextFormField(
+                        controller: _adminCodeController,
+                        obscureText: true,
+                        decoration: const InputDecoration(
+                          labelText: 'Admin Secret Code',
+                          prefixIcon: Icon(Icons.security),
+                          helperText: "Hint: BREW2025",
+                          helperStyle: TextStyle(color: Colors.orange)
+                        ),
+                        validator: (value) => (value == null || value.isEmpty) ? 'Admin Code required' : null,
+                      ),
+
+                    const SizedBox(height: 16),
+
+                    // --- Password ---
+                    TextFormField(
+                      controller: _passwordController,
+                      decoration: const InputDecoration(labelText: 'Password', prefixIcon: Icon(Icons.lock)),
+                      obscureText: true,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) return 'Password is required';
+                        if (value.length < 6) return 'Password must be at least 6 characters';
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 32),
+                    
+                    // --- Button ---
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: _signUp,
+                        child: const Text('Sign Up', style: TextStyle(fontSize: 16)),
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 24),
+                    TextButton(
+                      onPressed: () => context.pop(), 
+                      child: const Text('Already have an account? Log In'),
+                    ),
+                  ],
+                ),
               ),
             ),
           );
