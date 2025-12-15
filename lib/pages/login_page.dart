@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../bloc/auth/auth_bloc.dart';
+import '../services/auth_service.dart'; // Service import ki
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -27,6 +28,65 @@ class _LoginPageState extends State<LoginPage> {
     ));
   }
 
+  // ⭐ FORGOT PASSWORD DIALOG LOGIC
+  void _showForgotPasswordDialog() {
+    final resetEmailController = TextEditingController();
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Reset Password"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text("Enter your email to receive a reset link."),
+            const SizedBox(height: 10),
+            TextField(
+              controller: resetEmailController,
+              decoration: const InputDecoration(labelText: "Email", border: OutlineInputBorder()),
+              keyboardType: TextInputType.emailAddress,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final email = resetEmailController.text.trim();
+              if (email.isEmpty) return;
+
+              Navigator.pop(context); // Close dialog first
+
+              try {
+                // Call Service
+                await AuthService.sendPasswordResetEmail(email);
+                
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Reset link sent! Check your email.'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+                  );
+                }
+              }
+            },
+            child: const Text("Send Link"),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -41,11 +101,9 @@ class _LoginPageState extends State<LoginPage> {
                  duration: Duration(seconds: 1),
                ),
              );
-             // Navigate to home/root on success
              context.go('/home');
           }
           if (state is AuthError) {
-            print("LoginPage: AuthError received. Message: ${state.message}");
             showDialog(
               context: context,
               builder: (context) => AlertDialog(
@@ -75,6 +133,7 @@ class _LoginPageState extends State<LoginPage> {
                     style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.blue),
                   ),
                   const SizedBox(height: 32),
+                  
                   TextFormField(
                     controller: _emailController,
                     decoration: const InputDecoration(labelText: 'Email'),
@@ -82,13 +141,25 @@ class _LoginPageState extends State<LoginPage> {
                     enabled: !isLoading,
                   ),
                   const SizedBox(height: 16),
+                  
                   TextFormField(
                     controller: _passwordController,
                     decoration: const InputDecoration(labelText: 'Password'),
                     obscureText: true,
                     enabled: !isLoading,
                   ),
-                  const SizedBox(height: 32),
+                  
+                  // ⭐ FORGOT PASSWORD BUTTON
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: isLoading ? null : _showForgotPasswordDialog,
+                      child: const Text("Forgot Password?", style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+                  
                   ElevatedButton(
                     onPressed: isLoading ? null : _signIn,
                     child: isLoading 
@@ -101,7 +172,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   const SizedBox(height: 24),
                   TextButton(
-                    onPressed: isLoading ? null : () => context.push('/signup'), // Use GoRouter push
+                    onPressed: isLoading ? null : () => context.push('/signup'), 
                     child: const Text('Don\'t have an account? Sign Up'),
                   ),
                 ],

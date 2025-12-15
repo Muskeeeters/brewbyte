@@ -13,6 +13,8 @@ import '../screens/home_screen.dart';
 import '../screens/profile_management_screen.dart';
 import '../screens/my_profile_edit_screen.dart';
 import '../screens/manage_all_profiles_screen.dart';
+import '../screens/settings_screen.dart';
+import '../screens/change_password_screen.dart';
 
 // Menu Screens
 import '../screens/menu_screens/menu_list_screen.dart';
@@ -53,14 +55,14 @@ GoRouter createRouter(AuthBloc authBloc) {
       GoRoute(path: '/login', builder: (context, state) => const LoginPage()),
       GoRoute(path: '/signup', builder: (context, state) => const SignupPage()),
       GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
-      
+
       // Profiles
       GoRoute(
         path: '/profile_management',
         builder: (context, state) => const ProfileManagementScreen(),
       ),
       GoRoute(
-        path: '/my-profile-edit', 
+        path: '/my-profile-edit',
         builder: (context, state) => const MyProfileEditScreen(),
       ),
       GoRoute(
@@ -99,6 +101,21 @@ GoRouter createRouter(AuthBloc authBloc) {
       GoRoute(
         path: '/create_order',
         builder: (context, state) => const CreateOrderScreen(),
+      ),
+      GoRoute(
+        path: '/settings',
+        builder: (context, state) => const SettingsScreen(),
+      ),
+      // Settings Main Screen
+      GoRoute(
+        path: '/settings',
+        builder: (context, state) => const SettingsScreen(),
+      ),
+
+      // Settings Sub-Screen: Change Password
+      GoRoute(
+        path: '/change_password',
+        builder: (context, state) => const ChangePasswordScreen(),
       ),
     ],
   );

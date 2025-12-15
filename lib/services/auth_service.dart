@@ -4,37 +4,24 @@ import '../models/user_model.dart';
 class AuthService {
   static final supabase = Supabase.instance.client;
 
-  // 1. Get Current Profile (Centralized Logic)
+  // ... (Existing getCurrentProfile function) ...
   static Future<UserModel?> getCurrentProfile() async {
     try {
       final user = supabase.auth.currentUser;
       if (user == null) return null;
-
-      final data = await supabase
-          .from('profiles')
-          .select()
-          .eq('id', user.id)
-          .single();
-
+      final data = await supabase.from('profiles').select().eq('id', user.id).single();
       return UserModel.fromJson(data);
     } catch (e) {
-      print("Error fetching profile: $e");
       return null;
     }
   }
 
-  // 2. Login
+  // ... (Existing signIn function) ...
   static Future<UserModel> signIn(String email, String password) async {
     try {
-      await supabase.auth.signInWithPassword(
-        email: email.trim(),
-        password: password.trim(),
-      );
-      
-      // Login ke baad profile fetch karo
+      await supabase.auth.signInWithPassword(email: email.trim(), password: password.trim());
       final user = await getCurrentProfile();
-      if (user == null) throw Exception("User profile not found in database.");
-      
+      if (user == null) throw Exception("Profile not found");
       return user;
     } on AuthException catch (e) {
       throw AuthFailure(e.message);
@@ -43,7 +30,7 @@ class AuthService {
     }
   }
 
-  // 3. Sign Up
+  // ... (Existing signUp function) ...
   static Future<void> signUp({
     required String fullName,
     required String email,
@@ -57,11 +44,9 @@ class AuthService {
         email: email.trim(),
         password: password.trim(),
       );
-      
       final user = response.user;
       if (user == null) throw AuthFailure("Signup successful but user is null.");
 
-      // Naya Profile banao (including image_url as null initially)
       final newProfile = UserModel(
         id: user.id,
         fullName: fullName.trim(),
@@ -71,9 +56,7 @@ class AuthService {
         role: role,
         imageUrl: null, 
       );
-
       await supabase.from('profiles').insert(newProfile.toJson());
-      
     } on AuthException catch (e) {
       throw AuthFailure(e.message);
     } catch (e) {
@@ -81,15 +64,41 @@ class AuthService {
     }
   }
 
-  // 4. Logout
+  // ... (Existing signOut function) ...
   static Future<void> signOut() async {
     try {
       await supabase.auth.signOut();
     } catch (e) {
-      throw AuthFailure('Logout failed: ${e.toString()}');
+      throw AuthFailure('Logout failed');
+    }
+  }
+
+  // ⭐ NEW FUNCTION: Send Password Reset Email ⭐
+  static Future<void> sendPasswordResetEmail(String email) async {
+    try {
+      await supabase.auth.resetPasswordForEmail(email.trim());
+    } on AuthException catch (e) {
+      throw AuthFailure(e.message);
+    } catch (e) {
+      throw AuthFailure('Failed to send reset email');
+    }
+  }
+  // ... baaki functions ...
+
+  // ⭐ 5. Update Password (Logged In User ke liye)
+  static Future<void> updatePassword(String newPassword) async {
+    try {
+      await supabase.auth.updateUser(
+        UserAttributes(password: newPassword),
+      );
+    } on AuthException catch (e) {
+      throw AuthFailure(e.message);
+    } catch (e) {
+      throw AuthFailure('Password update failed');
     }
   }
 }
+
 
 class AuthFailure implements Exception {
   final String message;

@@ -184,11 +184,9 @@ class HomeScreen extends StatelessWidget {
                       title: 'Settings',
                       icon: Icons.settings,
                       onTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Settings - Coming Soon'),
-                          ),
-                        );
+                        context.push(
+                          '/settings',
+                        ); // <-- Ab ye Settings screen kholega
                       },
                     ),
                   ],
