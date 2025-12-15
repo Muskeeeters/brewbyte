@@ -28,11 +28,11 @@ class _OrderListScreenState extends State<OrderListScreen> {
     });
   }
 
-  // Status Change Dialog
+  // --- ACTIONS ---
+
+  // 1. Manager: Change Status
   void _showStatusDialog(OrderModel order) {
-    // Dialog mein bhi short ID dikhayein taake consistent lage
     final shortId = order.id.substring(0, 5).toUpperCase();
-    
     showDialog(
       context: context,
       builder: (context) {
@@ -49,17 +49,39 @@ class _OrderListScreenState extends State<OrderListScreen> {
     );
   }
 
+  // 2. Student: Cancel Order Logic
+  Future<void> _cancelOrder(String orderId) async {
+    // Confirmation Dialog
+    bool confirm = await showDialog(
+      context: context, 
+      builder: (context) => AlertDialog(
+        title: const Text("Cancel Order?"),
+        content: const Text("Are you sure you want to cancel this order?"),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("No")),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true), 
+            child: const Text("Yes, Cancel", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold))
+          ),
+        ],
+      )
+    ) ?? false;
+
+    if (confirm) {
+      await _orderService.updateOrderStatus(orderId, 'Cancelled');
+      _refreshOrders(); // UI Refresh
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Order Cancelled")));
+      }
+    }
+  }
+
   Widget _statusOption(String orderId, String status, Color color) {
     return SimpleDialogOption(
       onPressed: () async {
-        Navigator.pop(context); // Close dialog
-        await _orderService.updateOrderStatus(orderId, status); // Update logic
-        _refreshOrders(); // Refresh UI
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Status updated to $status")),
-          );
-        }
+        Navigator.pop(context); 
+        await _orderService.updateOrderStatus(orderId, status); 
+        _refreshOrders(); 
       },
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -82,7 +104,7 @@ class _OrderListScreenState extends State<OrderListScreen> {
 
     return Scaffold(
       appBar: AppBar(title: Text(isManager ? "Manage Orders" : "My Orders")),
-      // Sirf Non-Manager (User) ko create button dikhana hai
+      // Sirf Student Order create kar sake
       floatingActionButton: !isManager 
           ? FloatingActionButton(
               backgroundColor: const Color(0xFFFFC107),
@@ -111,7 +133,7 @@ class _OrderListScreenState extends State<OrderListScreen> {
             itemBuilder: (context, index) {
               final order = orders[index];
               
-              // Helper to Format Date Time nicely (e.g., 12:30)
+              // Helper to Format Date Time
               final dt = order.createdAt;
               final formattedTime = "${dt.day}/${dt.month} • ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}";
 
@@ -124,73 +146,56 @@ class _OrderListScreenState extends State<OrderListScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // --- HEADER ROW (Order ID + Status) ---
+                      // --- HEADER ROW (ID + STATUS/ACTION) ---
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          // Left Side: Order ID & Date
+                          // Left: ID & Date
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                "ORDER #${order.id.substring(0, 5).toUpperCase()}", // Clean ID
+                                "ORDER #${order.id.substring(0, 5).toUpperCase()}", 
                                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                formattedTime, // Date & Time
+                                formattedTime, 
                                 style: TextStyle(color: Colors.grey[600], fontSize: 12),
                               ),
                             ],
                           ),
                           
-                          // Right Side: Status Badge/Button
-                          isManager 
-                          ? InkWell(
+                          // Right: Action Logic
+                          // 1. Agar Manager hai -> Edit Button
+                          if (isManager)
+                             InkWell(
                               onTap: () => _showStatusDialog(order),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: Colors.grey[200],
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(color: Colors.black12)
-                                ),
-                                child: Row(
-                                  children: [
-                                    Text(
-                                      order.status,
-                                      style: TextStyle(
-                                        color: _getStatusColor(order.status),
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 4),
-                                    const Icon(Icons.edit, size: 14),
-                                  ],
-                                ),
-                              ),
+                              child: _statusBadge(order.status, true),
                             )
-                          : Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: _getStatusColor(order.status).withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(8),
+                          
+                          // 2. Agar Student hai aur Order Pending hai -> CANCEL BUTTON
+                          else if (order.status == 'Pending')
+                            OutlinedButton(
+                              onPressed: () => _cancelOrder(order.id),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: Colors.red,
+                                side: const BorderSide(color: Colors.red),
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))
                               ),
-                              child: Text(
-                                order.status,
-                                style: TextStyle(
-                                  color: _getStatusColor(order.status),
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ),
+                              child: const Text("Cancel"),
+                            )
+
+                          // 3. Agar Student hai aur Order Process ho chuka hai -> Sirf Badge
+                          else
+                            _statusBadge(order.status, false),
                         ],
                       ),
                       
                       const Divider(height: 24),
                       
-                      // --- ORDER ITEMS LIST ---
+                      // Items List
                       ...order.items.map((item) => Padding(
                         padding: const EdgeInsets.symmetric(vertical: 2.0),
                         child: Row(
@@ -203,7 +208,7 @@ class _OrderListScreenState extends State<OrderListScreen> {
                       
                       const SizedBox(height: 12),
                       
-                      // --- TOTAL AMOUNT ---
+                      // Total
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -218,6 +223,34 @@ class _OrderListScreenState extends State<OrderListScreen> {
             },
           );
         },
+      ),
+    );
+  }
+
+  // Helper Widget for Status Badge
+  Widget _statusBadge(String status, bool showEditIcon) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: _getStatusColor(status).withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: _getStatusColor(status).withOpacity(0.3))
+      ),
+      child: Row(
+        children: [
+          Text(
+            status,
+            style: TextStyle(
+              color: _getStatusColor(status),
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
+            ),
+          ),
+          if (showEditIcon) ...[
+            const SizedBox(width: 4),
+            Icon(Icons.edit, size: 14, color: _getStatusColor(status)),
+          ]
+        ],
       ),
     );
   }
