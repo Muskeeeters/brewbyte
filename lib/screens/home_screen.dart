@@ -2,16 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../bloc/auth/auth_bloc.dart';
+import 'student_home_view.dart'; // ✅ Import New View
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // ⭐ CHANGE: BlocBuilder lagaya hai taake update sun sake
     return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, state) {
-        // Agar user login nahi hai ya data load ho raha hai
         if (state is! AuthAuthenticated) {
           return const Scaffold(
             body: Center(child: CircularProgressIndicator()),
@@ -21,9 +20,18 @@ class HomeScreen extends StatelessWidget {
         final user = state.user;
         final isManager = user.role == 'manager';
 
+        // ⭐ IF STUDENT: Show New Cafe View
+        if (!isManager) {
+          return Scaffold(
+            // Note: Student view has its own custom header, so no AppBar here
+            body: SafeArea(child: StudentHomeView(userName: user.fullName)),
+          );
+        }
+
+        // ⭐ IF MANAGER: Show Old Dashboard
         return Scaffold(
           appBar: AppBar(
-            title: const Text('BrewByte Dashboard'),
+            title: const Text('Manager Dashboard'),
             actions: [
               IconButton(
                 icon: const Icon(Icons.logout),
@@ -38,7 +46,7 @@ class HomeScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 2. Greeting Section (User Info + PICTURE)
+                // Greeting Section (Same as before)
                 Container(
                   padding: const EdgeInsets.all(24),
                   width: double.infinity,
@@ -55,20 +63,21 @@ class HomeScreen extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      // --- PROFILE PICTURE ---
                       Container(
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           border: Border.all(color: Colors.white, width: 2),
                         ),
                         child: CircleAvatar(
-                          radius: 30, // Size
+                          radius: 30,
                           backgroundColor: Colors.white.withOpacity(0.3),
-                          // Logic: Agar Image URL hai to wo dikhao, warna Initials
+                          // ✅ Cache Buster Trick Added
                           backgroundImage:
                               (user.imageUrl != null &&
                                   user.imageUrl!.isNotEmpty)
-                              ? NetworkImage(user.imageUrl!)
+                              ? NetworkImage(
+                                  "${user.imageUrl!}?t=${DateTime.now().millisecondsSinceEpoch}",
+                                )
                               : null,
                           child:
                               (user.imageUrl == null || user.imageUrl!.isEmpty)
@@ -85,9 +94,7 @@ class HomeScreen extends StatelessWidget {
                               : null,
                         ),
                       ),
-
-                      const SizedBox(width: 16), // Gap
-                      // Name and Role
+                      const SizedBox(width: 16),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -103,7 +110,7 @@ class HomeScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Your Role: ${user.role}',
+                              'Role: Manager',
                               style: Theme.of(context).textTheme.titleMedium
                                   ?.copyWith(
                                     color: Colors.black54,
@@ -118,9 +125,9 @@ class HomeScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 32),
 
-                // 3. Dashboard Grid
+                // Manager Options
                 Text(
-                  'Quick Actions',
+                  'Admin Actions',
                   style: Theme.of(
                     context,
                   ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
@@ -133,61 +140,30 @@ class HomeScreen extends StatelessWidget {
                   crossAxisSpacing: 16,
                   mainAxisSpacing: 16,
                   children: [
-                    // --- ITEM 1: Menu ---
                     _DashboardCard(
-                      title: isManager ? 'Manage Menu' : 'View Menu',
+                      title: 'Manage Menu',
                       icon: Icons.restaurant_menu,
-                      onTap: () {
-                        context.push('/menu_list');
-                      },
+                      onTap: () => context.push('/menu_list'),
                     ),
-
-                    // --- ITEM 2: Place Order ---
                     _DashboardCard(
-                      title: 'Place Order',
-                      icon: Icons.add_shopping_cart,
-                      onTap: () {
-                        context.push('/create_order');
-                      },
+                      title: 'Manage Orders',
+                      icon: Icons.assignment_turned_in,
+                      onTap: () => context.push('/orders'),
                     ),
-
-                    // --- ITEM 3: Order History ---
                     _DashboardCard(
-                      title: 'Order History',
-                      icon: Icons.receipt_long,
-                      onTap: () {
-                        context.push('/orders');
-                      },
+                      title: 'Manage Profiles',
+                      icon: Icons.manage_accounts,
+                      onTap: () => context.push('/manage-profiles'),
                     ),
-
-                    // --- ITEM 4: My Profile ---
                     _DashboardCard(
                       title: 'My Profile',
                       icon: Icons.person,
-                      onTap: () {
-                        context.push('/my-profile-edit');
-                      },
+                      onTap: () => context.push('/my-profile-edit'),
                     ),
-
-                    // --- ITEM 5: Manage Profiles (Manager Only) ---
-                    if (isManager)
-                      _DashboardCard(
-                        title: 'Manage Profiles',
-                        icon: Icons.manage_accounts,
-                        onTap: () {
-                          context.push('/manage-profiles');
-                        },
-                      ),
-
-                    // --- ITEM 6: Settings ---
                     _DashboardCard(
                       title: 'Settings',
                       icon: Icons.settings,
-                      onTap: () {
-                        context.push(
-                          '/settings',
-                        ); // <-- Ab ye Settings screen kholega
-                      },
+                      onTap: () => context.push('/settings'),
                     ),
                   ],
                 ),

@@ -16,10 +16,14 @@ import '../screens/manage_all_profiles_screen.dart';
 import '../screens/settings_screen.dart';
 import '../screens/change_password_screen.dart';
 
-// Menu Screens
-import '../screens/menu_screens/menu_list_screen.dart';
+// Menu Screens (Make sure file names match EXACTLY)
+import '../screens/menu_screens/menu_list_screen.dart'; 
 import '../screens/menu_screens/add_menu_screen.dart';
-import '../screens/menu_screens/menu_item_list_screen.dart'; // ✅ Import Added
+import '../screens/menu_screens/menu_item_list_screen.dart'; 
+import '../screens/menu_screens/product_detail_screen.dart';
+
+// Models
+import '../models/menu_item_model.dart'; 
 
 // Order Screens
 import '../screens/order_screens/order_list_screen.dart';
@@ -37,17 +41,11 @@ GoRouter createRouter(AuthBloc authBloc) {
       final isRoot = state.uri.toString() == '/';
 
       if (!isAuthenticated) {
-        if (!isLoggingIn && !isSigningUp && !isRoot) {
-          return '/login';
-        }
+        if (!isLoggingIn && !isSigningUp && !isRoot) return '/login';
       }
-
       if (isAuthenticated) {
-        if (isLoggingIn || isSigningUp || isRoot) {
-          return '/home';
-        }
+        if (isLoggingIn || isSigningUp || isRoot) return '/home';
       }
-
       return null;
     },
     routes: [
@@ -56,67 +54,43 @@ GoRouter createRouter(AuthBloc authBloc) {
       GoRoute(path: '/signup', builder: (context, state) => const SignupPage()),
       GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
 
-      // Profiles
-      GoRoute(
-        path: '/profile_management',
-        builder: (context, state) => const ProfileManagementScreen(),
-      ),
-      GoRoute(
-        path: '/my-profile-edit',
-        builder: (context, state) => const MyProfileEditScreen(),
-      ),
-      GoRoute(
-        path: '/manage-profiles',
-        builder: (context, state) => const ManageAllProfilesScreen(),
-      ),
+      GoRoute(path: '/profile_management', builder: (context, state) => const ProfileManagementScreen()),
+      GoRoute(path: '/my-profile-edit', builder: (context, state) => const MyProfileEditScreen()),
+      GoRoute(path: '/manage-profiles', builder: (context, state) => const ManageAllProfilesScreen()),
 
-      // Menus (Categories)
+      // Menus
       GoRoute(
-        path: '/menu_list',
-        builder: (context, state) => const MenuListScreen(),
+        path: '/menu_list', 
+        builder: (context, state) => const MenuListScreen() // Ab ye Error nahi dega
       ),
-      GoRoute(
-        path: '/add_menu',
-        builder: (context, state) => const AddMenuScreen(),
-      ),
+      GoRoute(path: '/add_menu', builder: (context, state) => const AddMenuScreen()),
 
-      // ⭐ NEW ROUTE: Items inside a Menu
       GoRoute(
         path: '/menu_items',
         builder: (context, state) {
-          // Data jo humne push karte waqt 'extra' mein bheja tha
           final args = state.extra as Map<String, dynamic>;
           return MenuItemListScreen(
-            menuId: args['menuId'],
-            menuName: args['menuName'],
+            menuId: args['menuId'], 
+            menuName: args['menuName']
           );
         },
       ),
 
-      // Orders
       GoRoute(
-        path: '/orders',
-        builder: (context, state) => const OrderListScreen(),
-      ),
-      GoRoute(
-        path: '/create_order',
-        builder: (context, state) => const CreateOrderScreen(),
-      ),
-      GoRoute(
-        path: '/settings',
-        builder: (context, state) => const SettingsScreen(),
-      ),
-      // Settings Main Screen
-      GoRoute(
-        path: '/settings',
-        builder: (context, state) => const SettingsScreen(),
+        path: '/product_detail',
+        builder: (context, state) {
+          final item = state.extra as MenuItemModel;
+          return ProductDetailScreen(item: item);
+        },
       ),
 
-      // Settings Sub-Screen: Change Password
-      GoRoute(
-        path: '/change_password',
-        builder: (context, state) => const ChangePasswordScreen(),
-      ),
+      // Orders
+      GoRoute(path: '/orders', builder: (context, state) => const OrderListScreen()),
+      GoRoute(path: '/create_order', builder: (context, state) => const CreateOrderScreen()),
+
+      // Settings
+      GoRoute(path: '/settings', builder: (context, state) => const SettingsScreen()),
+      GoRoute(path: '/change_password', builder: (context, state) => const ChangePasswordScreen()),
     ],
   );
 }
@@ -124,13 +98,9 @@ GoRouter createRouter(AuthBloc authBloc) {
 class GoRouterRefreshStream extends ChangeNotifier {
   GoRouterRefreshStream(Stream<dynamic> stream) {
     notifyListeners();
-    _subscription = stream.asBroadcastStream().listen(
-      (dynamic _) => notifyListeners(),
-    );
+    _subscription = stream.asBroadcastStream().listen((dynamic _) => notifyListeners());
   }
-
   late final StreamSubscription<dynamic> _subscription;
-
   @override
   void dispose() {
     _subscription.cancel();
