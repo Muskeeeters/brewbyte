@@ -4,6 +4,7 @@ import '../../models/menu_item_model.dart';
 import '../../bloc/cart/cart_bloc.dart';
 import '../../bloc/cart/cart_event.dart';
 import '../../bloc/cart/cart_state.dart';
+import '../../widgets/cart_icon_badge.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final MenuItemModel item;
@@ -89,7 +90,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             icon: const Icon(Icons.arrow_back, color: Colors.white),
             onPressed: () => Navigator.pop(context),
           ),
-        ),
+          ),
+
+        actions: const [
+           Padding(
+            padding: EdgeInsets.only(right: 16.0),
+            child: CartIconBadge(color: Colors.white),
+          ),
+        ],
       ),
       // STICKY BOTTOM ACTION BAR
       bottomNavigationBar: Container(

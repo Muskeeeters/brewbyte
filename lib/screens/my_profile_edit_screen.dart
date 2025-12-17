@@ -132,7 +132,7 @@ class _MyProfileEditScreenState extends State<MyProfileEditScreen> {
         return MemoryImage(_selectedImageBytes!); // Preview new
       }
       if (_currentImageUrl != null && _currentImageUrl!.isNotEmpty) {
-        return NetworkImage("${_currentImageUrl!}?t=${DateTime.now().millisecondsSinceEpoch}"); // Show old
+        return NetworkImage(_currentImageUrl!); // Show old
       }
       return null;
     }

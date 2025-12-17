@@ -17,6 +17,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
 
   // Animation Controller
   late AnimationController _animController;
+  late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
 
   @override
@@ -24,14 +25,19 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
     super.initState();
     _animController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: 1200),
     );
+
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animController, curve: const Interval(0.0, 0.6, curve: Curves.easeIn)),
+    );
+
     _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.3), // Slide up from 30% down
+      begin: const Offset(0, 0.3), 
       end: Offset.zero,
     ).animate(CurvedAnimation(
       parent: _animController,
-      curve: Curves.easeOutBack,
+      curve: const Interval(0.2, 1.0, curve: Curves.easeOutBack),
     ));
 
     _animController.forward();
@@ -162,9 +168,11 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                color: Color(0xFF121212), // Fallback
             ),
             padding: const EdgeInsets.symmetric(horizontal: 24.0),
-            child: SlideTransition(
-              position: _slideAnimation,
-              child: Center(
+            child: FadeTransition(
+              opacity: _fadeAnimation,
+              child: SlideTransition(
+                position: _slideAnimation,
+                child: Center(
                 child: SingleChildScrollView(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -192,7 +200,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                       ),
                       const SizedBox(height: 8),
                       const Text(
-                        'Sign in to your gourmet account',
+                        'Sign in to your brewbyte/cafe account',
                         style: TextStyle(
                           fontSize: 14,
                           color: Colors.white54,
@@ -225,6 +233,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                                 prefixIcon: Icon(Icons.email_outlined, color: Color(0xFFFFC107)),
                               ),
                               keyboardType: TextInputType.emailAddress,
+                              textInputAction: TextInputAction.next,
                               enabled: !isLoading,
                             ),
                             const SizedBox(height: 20),
@@ -249,6 +258,8 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                                 ),
                               ),
                               obscureText: !_isPasswordVisible,
+                              textInputAction: TextInputAction.done,
+                              onFieldSubmitted: (_) => _signIn(),
                               enabled: !isLoading,
                             ),
                           ],
@@ -313,7 +324,8 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                 ),
               ),
             ),
-          );
+          ),
+        );
         },
       ),
     );

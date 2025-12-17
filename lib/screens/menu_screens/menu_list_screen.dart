@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../bloc/auth/auth_bloc.dart'; // Import AuthBloc
 import '../../models/menu_model.dart';
 import '../../services/menu_service.dart';
+import '../../widgets/cart_icon_badge.dart';
 
 class MenuListScreen extends StatefulWidget {
   const MenuListScreen({super.key});
@@ -62,6 +63,12 @@ class _MenuListScreenState extends State<MenuListScreen> {
             ),
           ),
         ),
+        actions: const [
+          Padding(
+            padding: EdgeInsets.only(right: 16.0),
+            child: CartIconBadge(color: Color(0xFFFFC107)),
+          ),
+        ],
       ),
       // Only show FAB if Manager
       floatingActionButton: isManager ? FloatingActionButton.extended(

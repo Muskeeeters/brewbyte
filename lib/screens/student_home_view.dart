@@ -4,10 +4,12 @@ import 'package:go_router/go_router.dart';
 import '../bloc/auth/auth_bloc.dart';
 import '../services/menu_service.dart';
 import '../models/menu_model.dart';
+import '../widgets/cart_icon_badge.dart'; // Fixed Import
 
 class StudentHomeView extends StatefulWidget {
   final String userName;
-  const StudentHomeView({super.key, required this.userName});
+  final String? imageUrl;
+  const StudentHomeView({super.key, required this.userName, this.imageUrl});
 
   @override
   State<StudentHomeView> createState() => _StudentHomeViewState();
@@ -66,11 +68,17 @@ class _StudentHomeViewState extends State<StudentHomeView> {
                             ),
                           ),
                         ),
-                        IconButton(
-                          icon: const Icon(Icons.logout, color: Colors.white70),
-                          onPressed: () {
-                            context.read<AuthBloc>().add(AuthLogoutRequested());
-                          },
+
+                        Row(
+                          children: [
+                            const CartIconBadge(color: Colors.white70), // Add Cart Icon
+                            IconButton(
+                              icon: const Icon(Icons.logout, color: Colors.white70),
+                              onPressed: () {
+                                context.read<AuthBloc>().add(AuthLogoutRequested());
+                              },
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -97,10 +105,15 @@ class _StudentHomeViewState extends State<StudentHomeView> {
                       child: CircleAvatar(
                         radius: 50,
                         backgroundColor: const Color(0xFF2C2C2C),
-                        child: Text(
-                          widget.userName.isNotEmpty ? widget.userName[0].toUpperCase() : '?',
-                          style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: Colors.white),
-                        ),
+                        backgroundImage: (widget.imageUrl != null && widget.imageUrl!.isNotEmpty)
+                            ? NetworkImage(widget.imageUrl!)
+                            : null,
+                        child: (widget.imageUrl == null || widget.imageUrl!.isEmpty) 
+                            ? Text(
+                                widget.userName.isNotEmpty ? widget.userName[0].toUpperCase() : '?',
+                                style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: Colors.white),
+                              )
+                            : null,
                       ),
                     ),
                   ),

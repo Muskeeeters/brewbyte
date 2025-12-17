@@ -5,6 +5,7 @@ import '../../bloc/auth/auth_bloc.dart'; // Import AuthBloc
 import '../../models/menu_item_model.dart';
 import '../../services/menu_service.dart';
 import 'add_menu_item_screen.dart';
+import '../../widgets/cart_icon_badge.dart';
 
 class MenuItemListScreen extends StatefulWidget {
   final String menuId;
@@ -60,12 +61,18 @@ class _MenuItemListScreenState extends State<MenuItemListScreen> {
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [Colors.black.withOpacity(0.9), Colors.transparent],
+              colors: [Colors.black.withOpacity(0.8), Colors.transparent],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
             ),
           ),
         ),
+        actions: const [
+           Padding(
+            padding: EdgeInsets.only(right: 16.0),
+            child: CartIconBadge(color: Color(0xFFFFC107)),
+          ),
+        ],
       ),
       // Only show FAB if Manager
       floatingActionButton: isManager ? FloatingActionButton(

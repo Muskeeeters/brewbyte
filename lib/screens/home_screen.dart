@@ -23,7 +23,10 @@ class HomeScreen extends StatelessWidget {
 
         if (!isManager) {
           return Scaffold(
-            body: SafeArea(child: StudentHomeView(userName: user.fullName)),
+            body: SafeArea(child: StudentHomeView(
+              userName: user.fullName,
+              imageUrl: user.imageUrl,
+            )),
           );
         }
 
@@ -174,7 +177,7 @@ class _ManagerDashboard extends StatelessWidget {
                           radius: 50,
                           backgroundColor: const Color(0xFF2C2C2C),
                           backgroundImage: (user.imageUrl != null && user.imageUrl!.isNotEmpty)
-                              ? NetworkImage("${user.imageUrl!}?t=${DateTime.now().millisecondsSinceEpoch}")
+                              ? NetworkImage(user.imageUrl!)
                               : null,
                           child: (user.imageUrl == null || user.imageUrl!.isEmpty)
                               ? Text(
@@ -344,33 +347,37 @@ class _DashboardCard extends StatelessWidget {
           onTap: onTap,
           borderRadius: BorderRadius.circular(24),
           child: Padding(
-            padding: const EdgeInsets.all(20.0),
+            padding: const EdgeInsets.all(16.0),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: color.withOpacity(0.1),
                     shape: BoxShape.circle,
+                    border: Border.all(color: color.withOpacity(0.2), width: 1),
                   ),
-                  child: Icon(icon, color: color, size: 32),
+                  child: Icon(icon, color: color, size: 36),
                 ),
-                const Spacer(),
+                const SizedBox(height: 16),
                 Text(
                   title,
+                  textAlign: TextAlign.center,
                   style: const TextStyle(
-                    fontSize: 18,
+                    fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
+                    letterSpacing: 0.5,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   subtitle,
+                  textAlign: TextAlign.center,
                   style: const TextStyle(
-                    fontSize: 12,
+                    fontSize: 11,
                     color: Colors.white54,
                   ),
                 ),
