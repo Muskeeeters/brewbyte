@@ -31,60 +31,86 @@ class BrewByte extends StatelessWidget {
       title: 'Brew Byte',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        scaffoldBackgroundColor: const Color(0xFFF5F5F5), // Off-white/Light Gray
-        primaryColor: const Color(0xFFFFC107), // Food Yellow
+        useMaterial3: true,
+        scaffoldBackgroundColor: const Color(0xFFF8F8F8), // Very Light Grey for differentiation
+        primaryColor: const Color(0xFFFFC107), // Golden Yellow
+        primaryColorDark: const Color(0xFFFFB300),
+        
+        // Color Scheme
         colorScheme: ColorScheme.fromSwatch(
-          primarySwatch: Colors.yellow,
-          accentColor: Colors.black87,
-          backgroundColor: const Color(0xFFF5F5F5),
+          primarySwatch: Colors.amber, 
+          backgroundColor: const Color(0xFFF8F8F8),
         ).copyWith(
-          secondary: Colors.black87, // Dark Charcoal
+          primary: const Color(0xFFFFC107), // Golden Yellow
+          secondary: const Color(0xFFE53935), // Food Red
+          surface: Colors.white,
+          error: const Color(0xFFE53935),
+          onPrimary: Colors.black, // Text on Yellow
+          onSecondary: Colors.white, // Text on Red
         ),
+
+        // Typography
+        textTheme: const TextTheme(
+          displayLarge: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold),
+          displayMedium: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold),
+          bodyLarge: TextStyle(color: Colors.black87),
+          bodyMedium: TextStyle(color: Colors.black87),
+        ),
+
+        // AppBar Theme
         appBarTheme: const AppBarTheme(
-          backgroundColor: Color(0xFFF5F5F5),
+          backgroundColor: Colors.transparent,
           elevation: 0,
           centerTitle: true,
           iconTheme: IconThemeData(color: Colors.black87),
           titleTextStyle: TextStyle(
             color: Colors.black87,
             fontWeight: FontWeight.bold,
-            fontSize: 20,
+            fontSize: 22,
           ),
         ),
+
+        // Input Decoration
         inputDecorationTheme: const InputDecorationTheme(
           filled: true,
           fillColor: Colors.white,
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.all(Radius.circular(12)),
+            borderRadius: BorderRadius.all(Radius.circular(16)),
             borderSide: BorderSide(color: Colors.black12),
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.all(Radius.circular(12)),
+            borderRadius: BorderRadius.all(Radius.circular(16)),
             borderSide: BorderSide(color: Colors.black12),
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.all(Radius.circular(12)),
+            borderRadius: BorderRadius.all(Radius.circular(16)),
             borderSide: BorderSide(color: Color(0xFFFFC107), width: 2),
           ),
-          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           labelStyle: TextStyle(color: Colors.black54),
         ),
+
+        // Elevated Button (Pill Shape)
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFFFFC107),
             foregroundColor: Colors.black87,
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 32),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
             textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            elevation: 2,
+            elevation: 4,
+            shadowColor: const Color(0xFFFFC107).withOpacity(0.4),
           ),
         ),
+
+        // Text Button
         textButtonTheme: TextButtonThemeData(
           style: TextButton.styleFrom(
-            foregroundColor: Colors.black87,
+            foregroundColor: const Color(0xFFE53935), // Food Red for actions
             textStyle: const TextStyle(fontWeight: FontWeight.w600),
           ),
         ),
+        
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
       routerConfig: createRouter(context.read<AuthBloc>()),
