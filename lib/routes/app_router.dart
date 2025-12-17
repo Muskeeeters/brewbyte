@@ -29,6 +29,7 @@ import '../models/menu_item_model.dart';
 // Order Screens
 import '../screens/order_screens/order_list_screen.dart';
 import '../screens/order_screens/create_order_screen.dart';
+import '../screens/cart_screen.dart'; // 🆕 Import CartScreen
 
 GoRouter createRouter(AuthBloc authBloc) {
   return GoRouter(
@@ -128,6 +129,10 @@ GoRouter createRouter(AuthBloc authBloc) {
       GoRoute(
         path: '/create_order', 
         pageBuilder: (context, state) => _fadeTransition(context, state, const CreateOrderScreen())
+      ),
+      GoRoute(
+        path: '/cart', 
+        pageBuilder: (context, state) => _fadeTransition(context, state, const CartScreen())
       ),
 
       // Settings

@@ -274,23 +274,6 @@ class _StudentHomeViewState extends State<StudentHomeView> {
                 const Color(0xFFFFC107), // Yellow for Profile
                 () => context.push('/my-profile-edit'),
               ),
-              _actionCard(
-                context,
-                "Settings",
-                Icons.settings_rounded,
-                const Color(0xFFE0E0E0), // Grey
-                () => context.push('/settings'),
-              ),
-              // Support or Help?
-              _actionCard(
-                context,
-                 "Support",
-                Icons.support_agent_rounded,
-                const Color(0xFFE53935), // Red
-                (){
-                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Support Coming Soon!")));
-                },
-              ),
             ],
           ),
           const SizedBox(height: 40),

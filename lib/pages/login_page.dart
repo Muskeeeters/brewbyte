@@ -122,10 +122,6 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
       extendBodyBehindAppBar: true, // Allow body to go behind transparent AppBar
       appBar: AppBar(
         title: const Text(''), // Empty setup
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFFFFC107)),
-          onPressed: () => context.canPop() ? context.pop() : null,
-        ),
       ), 
       body: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {

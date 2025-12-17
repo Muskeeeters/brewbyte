@@ -16,7 +16,6 @@ class CartBloc extends Bloc<CartEvent, CartState> {
       emit(CartLoaded(items: updatedItems));
     }
   }
-
   void _onItemRemoved(CartItemRemoved event, Emitter<CartState> emit) {
     if (state is CartLoaded) {
       final List<CartItem> updatedItems = List.from((state as CartLoaded).items);

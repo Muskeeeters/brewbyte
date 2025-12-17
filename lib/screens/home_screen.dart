@@ -271,16 +271,6 @@ class _ManagerDashboard extends StatelessWidget {
                       onTap: () => context.push('/my-profile-edit'),
                     ),
                   ),
-                   _AnimatedSlideIn(
-                    delay: step * 5,
-                    child: _DashboardCard(
-                      title: 'Settings',
-                      subtitle: 'Configure App',
-                      icon: Icons.settings,
-                      color: Colors.grey,
-                      onTap: () => context.push('/settings'),
-                    ),
-                  ),
                 ],
               ),
             ),

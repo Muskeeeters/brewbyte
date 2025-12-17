@@ -108,6 +108,10 @@ class _OrderListScreenState extends State<OrderListScreen> {
         backgroundColor: Colors.transparent,
         iconTheme: const IconThemeData(color: Color(0xFFFFC107)),
         centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Color(0xFFFFC107)),
+          onPressed: () => context.go('/home'),
+        ),
         actions: [
           // Cart Icon with Badge
           if (!isManager)
@@ -125,10 +129,8 @@ class _OrderListScreenState extends State<OrderListScreen> {
                       IconButton(
                         icon: const Icon(Icons.shopping_cart),
                         onPressed: () {
-                          // Navigate to Cart (View Only for now or just snackbar as "Cart Screen" wasn't requested explicitly but "Cart Logic" was)
-                          // Prompt said "Cart Access... shows number of items".
-                          // Ideally context.push('/cart') but we don't have it.
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Cart has $count items (View Cart Coming Soon)")));
+                          // Navigate to Cart
+                          context.push('/cart');
                         },
                       ),
                       if (count > 0)
