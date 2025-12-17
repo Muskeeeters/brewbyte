@@ -106,175 +106,165 @@ class _AddMenuItemScreenState extends State<AddMenuItemScreen> {
   InputDecoration _buildInputDecoration(String label, IconData icon) {
     return InputDecoration(
       labelText: label,
-      prefixIcon: Icon(icon, color: Colors.brown),
-      filled: true,
-      fillColor: Colors.white,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.grey.shade300),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.grey.shade300),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Colors.brown, width: 2),
-      ),
-      labelStyle: const TextStyle(color: Colors.grey),
+      prefixIcon: Icon(icon, color: const Color(0xFFFFC107)),
+      // Theme handles the rest (Dark fill, white text)
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50], // Light background
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: const Text("Add New Item"),
-        backgroundColor: Colors.brown,
-        foregroundColor: Colors.white,
-        centerTitle: true,
-        elevation: 0,
+        backgroundColor: Colors.transparent,
+        foregroundColor: const Color(0xFFFFC107),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Form(
-          key: _formKey,
+      body: Container(
+        decoration: const BoxDecoration(
+          color: Color(0xFF121212), // Deep Black
+        ),
+        child: Center(
           child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // --- IMAGE UPLOAD BOX ---
-                Center(
-                  child: InkWell(
-                    onTap: _pickImage,
-                    borderRadius: BorderRadius.circular(16),
-                    child: Container(
-                      height: 180,
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
+            padding: const EdgeInsets.all(24.0),
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E1E1E),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: Colors.white10),
+                boxShadow: [
+                  BoxShadow(
+                   color: Colors.black.withOpacity(0.5),
+                   blurRadius: 20,
+                   offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // --- IMAGE UPLOAD BOX ---
+                    Center(
+                      child: InkWell(
+                        onTap: _pickImage,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: _selectedImageBytes != null
-                              ? Colors.brown
-                              : Colors.grey.shade300,
-                          width: 2,
+                        child: Container(
+                          height: 180,
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF2C2C2C),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: _selectedImageBytes != null
+                                  ? const Color(0xFFFFC107)
+                                  : Colors.white24,
+                              width: 2,
+                            ),
+                            image: _selectedImageBytes != null
+                                ? DecorationImage(
+                                    image: MemoryImage(_selectedImageBytes!),
+                                    fit: BoxFit.cover,
+                                  )
+                                : null,
+                          ),
+                          child: _selectedImageBytes == null
+                              ? Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: const [
+                                    Icon(Icons.add_a_photo_outlined,
+                                        size: 50, color: Colors.white54),
+                                    SizedBox(height: 10),
+                                    Text(
+                                      "Tap to upload image",
+                                      style: TextStyle(
+                                        color: Colors.white54,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                )
+                              : Stack(
+                                  children: [
+                                    Positioned(
+                                      right: 10,
+                                      top: 10,
+                                      child: Container(
+                                        padding: const EdgeInsets.all(8),
+                                        decoration: const BoxDecoration(
+                                            color: Colors.black54,
+                                            shape: BoxShape.circle
+                                        ),
+                                        child: const Icon(Icons.edit,
+                                            size: 18, color: Color(0xFFFFC107)),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                         ),
-                        image: _selectedImageBytes != null
-                            ? DecorationImage(
-                                image: MemoryImage(_selectedImageBytes!),
-                                fit: BoxFit.cover,
+                      ),
+                    ),
+
+                    const SizedBox(height: 25),
+
+                    // --- FORM FIELDS ---
+                    TextFormField(
+                      controller: _nameController,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: _buildInputDecoration('Item Name', Icons.coffee),
+                      validator: (v) => v!.isEmpty ? 'Please enter a name' : null,
+                    ),
+                    const SizedBox(height: 16),
+
+                    TextFormField(
+                      controller: _priceController,
+                      style: const TextStyle(color: Colors.white),
+                      decoration:
+                          _buildInputDecoration('Price (PKR)', Icons.attach_money),
+                      keyboardType: TextInputType.number,
+                      validator: (v) {
+                        if (v == null || v.isEmpty) return 'Please enter price';
+                        if (double.tryParse(v) == null) return 'Invalid number';
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+
+                    TextFormField(
+                      controller: _descController,
+                      style: const TextStyle(color: Colors.white),
+                      decoration:
+                          _buildInputDecoration('Description', Icons.description),
+                      maxLines: 3,
+                    ),
+                    const SizedBox(height: 30),
+
+                    // --- SAVE BUTTON ---
+                    SizedBox(
+                      height: 55,
+                      child: ElevatedButton(
+                        onPressed: _isLoading ? null : _saveItem,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFFFC107),
+                          foregroundColor: Colors.black,
+                        ),
+                        child: _isLoading
+                            ? const SizedBox(
+                                height: 24,
+                                width: 24,
+                                child: CircularProgressIndicator(
+                                  color: Colors.black,
+                                  strokeWidth: 2,
+                                ),
                               )
-                            : null,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: _selectedImageBytes == null
-                          ? Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.add_a_photo_outlined,
-                                    size: 50, color: Colors.brown.shade300),
-                                const SizedBox(height: 10),
-                                Text(
-                                  "Tap to upload image",
-                                  style: TextStyle(
-                                    color: Colors.grey[600],
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            )
-                          : Stack(
-                              children: [
-                                Positioned(
-                                  right: 10,
-                                  top: 10,
-                                  child: CircleAvatar(
-                                    backgroundColor: Colors.white,
-                                    radius: 18,
-                                    child: Icon(Icons.edit,
-                                        size: 18, color: Colors.brown),
-                                  ),
-                                ),
-                              ],
-                            ),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 25),
-
-                // --- FORM FIELDS ---
-                // Name Field
-                TextFormField(
-                  controller: _nameController,
-                  decoration: _buildInputDecoration('Item Name', Icons.coffee),
-                  validator: (v) => v!.isEmpty ? 'Please enter a name' : null,
-                ),
-                const SizedBox(height: 16),
-
-                // Price Field
-                TextFormField(
-                  controller: _priceController,
-                  decoration:
-                      _buildInputDecoration('Price (PKR)', Icons.attach_money),
-                  keyboardType: TextInputType.number,
-                  validator: (v) {
-                    if (v == null || v.isEmpty) return 'Please enter price';
-                    if (double.tryParse(v) == null) return 'Invalid number';
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                // Description Field
-                TextFormField(
-                  controller: _descController,
-                  decoration:
-                      _buildInputDecoration('Description', Icons.description),
-                  maxLines: 3,
-                ),
-                const SizedBox(height: 30),
-
-                // --- SAVE BUTTON ---
-                SizedBox(
-                  height: 55,
-                  child: ElevatedButton(
-                    onPressed: _isLoading ? null : _saveItem,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.brown, // Theme Color
-                      foregroundColor: Colors.white,
-                      elevation: 2,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                            : const Text("SAVE ITEM"),
                       ),
                     ),
-                    child: _isLoading
-                        ? const SizedBox(
-                            height: 24,
-                            width: 24,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
-                            ),
-                          )
-                        : const Text(
-                            "Save Item",
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                  ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ),
