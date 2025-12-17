@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'bloc/auth/auth_bloc.dart';
-import 'routes/app_router.dart';
+import 'bloc/cart/cart_bloc.dart'; // Import CartBloc
+import 'bloc/auth/auth_bloc.dart'; // Restored AuthBloc Import
+import 'routes/app_router.dart'; // Restored Router Import
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -15,8 +16,11 @@ void main() async {
   );
   
   runApp(
-    BlocProvider(
-      create: (context) => AuthBloc()..add(AuthCheckStatus()),
+    MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (context) => AuthBloc()..add(AuthCheckStatus())),
+        BlocProvider(create: (context) => CartBloc()),
+      ],
       child: const BrewByte(),
     ),
   );

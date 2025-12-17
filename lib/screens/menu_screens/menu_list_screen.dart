@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart'; // Import Bloc
 import 'package:go_router/go_router.dart';
+import '../../bloc/auth/auth_bloc.dart'; // Import AuthBloc
 import '../../models/menu_model.dart';
 import '../../services/menu_service.dart';
 
@@ -37,6 +39,12 @@ class _MenuListScreenState extends State<MenuListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // RBAC Check
+    final isManager = context.select((AuthBloc bloc) {
+      final state = bloc.state;
+      return state is AuthAuthenticated && state.user.role == 'manager';
+    });
+
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
@@ -55,7 +63,8 @@ class _MenuListScreenState extends State<MenuListScreen> {
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      // Only show FAB if Manager
+      floatingActionButton: isManager ? FloatingActionButton.extended(
         backgroundColor: const Color(0xFFFFC107),
         foregroundColor: Colors.black,
         icon: const Icon(Icons.add),
@@ -64,7 +73,7 @@ class _MenuListScreenState extends State<MenuListScreen> {
           await context.push('/add_menu'); 
           _refreshMenus();
         },
-      ),
+      ) : null,
       body: Container(
         decoration: const BoxDecoration(
           color: Color(0xFF121212), // Deep Black
@@ -76,7 +85,7 @@ class _MenuListScreenState extends State<MenuListScreen> {
               return const Center(child: CircularProgressIndicator(color: Color(0xFFFFC107)));
             }
             if (snapshot.hasError) return Center(child: Text("Error: ${snapshot.error}", style: const TextStyle(color: Colors.red)));
-            if (!snapshot.hasData || snapshot.data!.isEmpty) return const Center(child: Text("No menus found. Add one!", style: TextStyle(color: Colors.white54)));
+            if (!snapshot.hasData || snapshot.data!.isEmpty) return const Center(child: Text("No menus found.", style: TextStyle(color: Colors.white54)));
 
             final menus = snapshot.data!;
             return ListView.separated(
@@ -129,10 +138,12 @@ class _MenuListScreenState extends State<MenuListScreen> {
                               ),
                             ],
                           ),
-                          IconButton(
-                            icon: const Icon(Icons.delete_outline, color: Color(0xFFE53935)),
-                            onPressed: () => _deleteMenu(menu.id!),
-                          ),
+                          // Only show Delete if Manager
+                          if (isManager)
+                            IconButton(
+                              icon: const Icon(Icons.delete_outline, color: Color(0xFFE53935)),
+                              onPressed: () => _deleteMenu(menu.id!),
+                            ),
                         ],
                       ),
                     ),

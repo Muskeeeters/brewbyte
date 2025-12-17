@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import '../../services/order_service.dart';
 import '../../models/order_model.dart';
 import '../../bloc/auth/auth_bloc.dart';
+import '../../bloc/cart/cart_bloc.dart';
+import '../../bloc/cart/cart_state.dart';
 
 class OrderListScreen extends StatefulWidget {
   const OrderListScreen({super.key});
@@ -106,14 +108,65 @@ class _OrderListScreenState extends State<OrderListScreen> {
         backgroundColor: Colors.transparent,
         iconTheme: const IconThemeData(color: Color(0xFFFFC107)),
         centerTitle: true,
+        actions: [
+          // Cart Icon with Badge
+          if (!isManager)
+            Padding(
+              padding: const EdgeInsets.only(right: 16.0),
+              child: BlocBuilder<CartBloc, CartState>(
+                builder: (context, state) {
+                  int count = 0;
+                  if (state is CartLoaded) {
+                    count = state.items.length;
+                  }
+                  return Stack(
+                    alignment: Alignment.topRight,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.shopping_cart),
+                        onPressed: () {
+                          // Navigate to Cart (View Only for now or just snackbar as "Cart Screen" wasn't requested explicitly but "Cart Logic" was)
+                          // Prompt said "Cart Access... shows number of items".
+                          // Ideally context.push('/cart') but we don't have it.
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Cart has $count items (View Cart Coming Soon)")));
+                        },
+                      ),
+                      if (count > 0)
+                        Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: const BoxDecoration(
+                            color: Colors.red,
+                            shape: BoxShape.circle,
+                          ),
+                          constraints: const BoxConstraints(
+                            minWidth: 16,
+                            minHeight: 16,
+                          ),
+                          child: Text(
+                            '$count',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                    ],
+                  );
+                },
+              ),
+            ),
+        ],
       ),
       floatingActionButton: !isManager 
-          ? FloatingActionButton(
+          ? FloatingActionButton.extended(
               backgroundColor: const Color(0xFFFFC107),
-              child: const Icon(Icons.add, color: Colors.black),
+              icon: const Icon(Icons.add, color: Colors.black),
+              label: const Text("Start New Order", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
               onPressed: () async {
-                await context.push('/create_order');
-                _refreshOrders();
+                // REDIRECT TO MENU
+                context.push('/menu_list');
               },
             )
           : null, 

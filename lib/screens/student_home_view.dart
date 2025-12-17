@@ -29,86 +29,113 @@ class _StudentHomeViewState extends State<StudentHomeView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 1. Premium Header with Gradient
+          // 1. RESTRUCTURED HEADER (Role -> Avatar -> Greeting)
           Container(
-            padding: const EdgeInsets.fromLTRB(24, 50, 24, 40),
+            padding: const EdgeInsets.only(bottom: 40),
             decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Color(0xFF1E1E1E), Color(0xFF121212)], // Dark Gradient
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
+              color: Color(0xFF1E1E1E), // Dark Header BG
               borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(30),
-                bottomRight: Radius.circular(30),
+                bottomLeft: Radius.circular(40),
+                bottomRight: Radius.circular(40),
               ),
             ),
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          "Hungry?",
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Color(0xFFFFC107), // Golden Yellow
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.2,
-                          ),
-                        ),
-                        Text(
-                          widget.userName,
-                          style: const TextStyle(
-                            fontSize: 26,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
-                    ),
-                    IconButton(
-                        icon: const Icon(Icons.logout, color: Color(0xFFFFC107)),
-                        onPressed: () {
-                          context.read<AuthBloc>().add(AuthLogoutRequested());
-                        },
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-      
-                // Search Bar
-                GestureDetector(
-                  onTap: () => context.push('/search'),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    height: 54,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF2C2C2C),
-                      borderRadius: BorderRadius.circular(27),
-                      border: Border.all(color: Colors.white10),
-                    ),
+            child: SafeArea(
+              bottom: false,
+              child: Column(
+                children: [
+                  // Top Row: Role Badge (Left) & Logout (Right)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                     child: Row(
-                      children: const [
-                        Icon(Icons.search, color: Color(0xFFFFC107)), // Yellow Icon
-                        SizedBox(width: 12),
-                        Text(
-                          "Find your craving...",
-                          style: TextStyle(color: Colors.white54, fontSize: 16),
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFC107).withOpacity(0.2), // Yellow Tint for Student
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: const Color(0xFFFFC107), width: 1),
+                          ),
+                          child: const Text(
+                            "STUDENT",
+                            style: TextStyle(
+                              color: Color(0xFFFFC107),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                              letterSpacing: 1.5,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.logout, color: Colors.white70),
+                          onPressed: () {
+                            context.read<AuthBloc>().add(AuthLogoutRequested());
+                          },
                         ),
                       ],
                     ),
                   ),
-                ),
-              ],
+
+                  // Middle: Avatar (Placeholder logic if no image provided in props, assuming generic for now as props only have name)
+                  // Ideally StudentHomeView should take full User object or we fetch it. 
+                  // For now, we use a generic styled avatar to match the design.
+                  Hero(
+                    tag: 'profile_student', // Generic tag since we don't have ID passed here easily without prop change
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: const Color(0xFFE53935), width: 2), // Red Accent
+                        boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFFE53935).withOpacity(0.2),
+                              blurRadius: 20,
+                              spreadRadius: 5,
+                            )
+                          ],
+                      ),
+                      child: CircleAvatar(
+                        radius: 50,
+                        backgroundColor: const Color(0xFF2C2C2C),
+                        child: Text(
+                          widget.userName.isNotEmpty ? widget.userName[0].toUpperCase() : '?',
+                          style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Bottom: Greeting
+                  Column(
+                    children: [
+                      const Text(
+                        "Hungry,", 
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        "${widget.userName}?",
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
-      
-          const SizedBox(height: 24),
-      
+
+          const SizedBox(height: 32),
+
           // 2. Categories
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -123,16 +150,18 @@ class _StudentHomeViewState extends State<StudentHomeView> {
                     color: Colors.white,
                   ),
                 ),
-                // See All button if needed
                 TextButton(
-                    onPressed: (){}, 
+                    onPressed: (){
+                      // Could navigate to full menu list if different View
+                      context.push('/menu_list');
+                    }, 
                     child: const Text("See All", style: TextStyle(color: Color(0xFFFFC107)))
                 )
               ],
             ),
           ),
           const SizedBox(height: 16),
-      
+
           SizedBox(
             height: 130,
             child: FutureBuilder<List<MenuModel>>(
@@ -144,7 +173,7 @@ class _StudentHomeViewState extends State<StudentHomeView> {
                 if (snapshot.data!.isEmpty) {
                   return const Center(child: Text("No menu yet", style: TextStyle(color: Colors.white54)));
                 }
-      
+
                 return ListView.builder(
                   scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -205,9 +234,9 @@ class _StudentHomeViewState extends State<StudentHomeView> {
               },
             ),
           ),
-      
+
           const SizedBox(height: 32),
-      
+
           // 3. Quick Actions Grid
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 24),
@@ -258,7 +287,9 @@ class _StudentHomeViewState extends State<StudentHomeView> {
                  "Support",
                 Icons.support_agent_rounded,
                 const Color(0xFFE53935), // Red
-                (){},
+                (){
+                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Support Coming Soon!")));
+                },
               ),
             ],
           ),
@@ -266,7 +297,6 @@ class _StudentHomeViewState extends State<StudentHomeView> {
         ],
       ),
     );
-    
   }
 
   Widget _actionCard(
@@ -284,6 +314,13 @@ class _StudentHomeViewState extends State<StudentHomeView> {
           color: const Color(0xFF1E1E1E), // Dark Card
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: Colors.white10),
+          boxShadow: [
+             BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+          ],
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

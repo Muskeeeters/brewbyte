@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart'; // Import Bloc
 import 'package:go_router/go_router.dart';
+import '../../bloc/auth/auth_bloc.dart'; // Import AuthBloc
 import '../../models/menu_item_model.dart';
 import '../../services/menu_service.dart';
 import 'add_menu_item_screen.dart';
@@ -41,6 +43,12 @@ class _MenuItemListScreenState extends State<MenuItemListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // RBAC Check
+    final isManager = context.select((AuthBloc bloc) {
+      final state = bloc.state;
+      return state is AuthAuthenticated && state.user.role == 'manager';
+    });
+
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
@@ -59,7 +67,8 @@ class _MenuItemListScreenState extends State<MenuItemListScreen> {
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
+      // Only show FAB if Manager
+      floatingActionButton: isManager ? FloatingActionButton(
         backgroundColor: const Color(0xFFFFC107),
         child: const Icon(Icons.add, color: Colors.black),
         onPressed: () async {
@@ -69,7 +78,7 @@ class _MenuItemListScreenState extends State<MenuItemListScreen> {
           );
           _refreshItems();
         },
-      ),
+      ) : null,
       body: Container(
         decoration: const BoxDecoration(
           color: Color(0xFF121212),
@@ -157,12 +166,14 @@ class _MenuItemListScreenState extends State<MenuItemListScreen> {
                             fontSize: 16,
                           )
                         ),
-                        const SizedBox(height: 4),
-                        // Only show delete if authorized? Assuming view logic is secure or universal for now
-                        InkWell(
-                          onTap: () => _deleteItem(item.id!),
-                          child: const Icon(Icons.delete_outline, color: Color(0xFFE53935), size: 20),
-                        ),
+                        // Only show delete if Manager
+                        if (isManager) ...[
+                          const SizedBox(height: 4),
+                          InkWell(
+                            onTap: () => _deleteItem(item.id!),
+                            child: const Icon(Icons.delete_outline, color: Color(0xFFE53935), size: 20),
+                          ),
+                        ]
                       ],
                     ),
                   ),
