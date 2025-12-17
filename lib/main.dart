@@ -32,29 +32,29 @@ class BrewByte extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
-        scaffoldBackgroundColor: const Color(0xFFF8F8F8), // Very Light Grey for differentiation
+        brightness: Brightness.dark, // Dark Mode Base
+        scaffoldBackgroundColor: const Color(0xFF121212), // Deep Matte Black
         primaryColor: const Color(0xFFFFC107), // Golden Yellow
         primaryColorDark: const Color(0xFFFFB300),
         
         // Color Scheme
-        colorScheme: ColorScheme.fromSwatch(
-          primarySwatch: Colors.amber, 
-          backgroundColor: const Color(0xFFF8F8F8),
-        ).copyWith(
-          primary: const Color(0xFFFFC107), // Golden Yellow
-          secondary: const Color(0xFFE53935), // Food Red
-          surface: Colors.white,
-          error: const Color(0xFFE53935),
+        colorScheme: const ColorScheme.dark(
+          primary: Color(0xFFFFC107), // Golden Yellow
+          secondary: Color(0xFFE53935), // Food Red
+          surface: Color(0xFF1E1E1E), // Dark Card Background
+          error: Color(0xFFE53935),
           onPrimary: Colors.black, // Text on Yellow
           onSecondary: Colors.white, // Text on Red
+          onSurface: Colors.white,
         ),
 
         // Typography
         textTheme: const TextTheme(
-          displayLarge: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold),
-          displayMedium: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold),
-          bodyLarge: TextStyle(color: Colors.black87),
-          bodyMedium: TextStyle(color: Colors.black87),
+          displayLarge: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          displayMedium: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          bodyLarge: TextStyle(color: Colors.white),
+          bodyMedium: TextStyle(color: Colors.white70),
+          titleMedium: TextStyle(color: Colors.white),
         ),
 
         // AppBar Theme
@@ -62,38 +62,43 @@ class BrewByte extends StatelessWidget {
           backgroundColor: Colors.transparent,
           elevation: 0,
           centerTitle: true,
-          iconTheme: IconThemeData(color: Colors.black87),
+          iconTheme: IconThemeData(color: Colors.white),
           titleTextStyle: TextStyle(
-            color: Colors.black87,
+            color: Colors.white,
             fontWeight: FontWeight.bold,
             fontSize: 22,
           ),
         ),
 
-        // Input Decoration
+        // Input Decoration (Pill Shape + White Text)
         inputDecorationTheme: const InputDecorationTheme(
           filled: true,
-          fillColor: Colors.white,
+          fillColor: Color(0xFF2C2C2C), // Darker Grey for inputs
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.all(Radius.circular(16)),
-            borderSide: BorderSide(color: Colors.black12),
+            borderRadius: BorderRadius.all(Radius.circular(30)),
+            borderSide: BorderSide.none,
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.all(Radius.circular(16)),
-            borderSide: BorderSide(color: Colors.black12),
+            borderRadius: BorderRadius.all(Radius.circular(30)),
+            borderSide: BorderSide(color: Colors.white24),
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.all(Radius.circular(16)),
+            borderRadius: BorderRadius.all(Radius.circular(30)),
             borderSide: BorderSide(color: Color(0xFFFFC107), width: 2),
           ),
-          contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          labelStyle: TextStyle(color: Colors.black54),
+          errorBorder: OutlineInputBorder(
+             borderRadius: BorderRadius.all(Radius.circular(30)),
+             borderSide: BorderSide(color: Color(0xFFE53935)),
+          ),
+          contentPadding: EdgeInsets.symmetric(horizontal: 24, vertical: 18), // Larger padding for pill
+          labelStyle: TextStyle(color: Colors.white70),
+          hintStyle: TextStyle(color: Colors.white38),
         ),
 
-        // Elevated Button (Pill Shape)
+        // Elevated Button (Red Pill by default or Yellow based on context? Plan says Red Pill for Auth)
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFFFFC107),
+            backgroundColor: const Color(0xFFFFC107), // Yellow Default
             foregroundColor: Colors.black87,
             padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 32),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
@@ -106,7 +111,7 @@ class BrewByte extends StatelessWidget {
         // Text Button
         textButtonTheme: TextButtonThemeData(
           style: TextButton.styleFrom(
-            foregroundColor: const Color(0xFFE53935), // Food Red for actions
+            foregroundColor: const Color(0xFFFFC107), // Yellow for links
             textStyle: const TextStyle(fontWeight: FontWeight.w600),
           ),
         ),

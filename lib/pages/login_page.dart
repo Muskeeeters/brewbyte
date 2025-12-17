@@ -10,17 +10,38 @@ class LoginPage extends StatefulWidget {
   State<LoginPage> createState() => _LoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMixin {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-
-  // ⭐ NEW VARIABLE: To track visibility
   bool _isPasswordVisible = false;
+
+  // Animation Controller
+  late AnimationController _animController;
+  late Animation<Offset> _slideAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.3), // Slide up from 30% down
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _animController,
+      curve: Curves.easeOutBack,
+    ));
+
+    _animController.forward();
+  }
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _animController.dispose();
     super.dispose();
   }
 
@@ -38,16 +59,19 @@ class _LoginPageState extends State<LoginPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text("Reset Password"),
+        backgroundColor: const Color(0xFF1E1E1E),
+        title: const Text("Reset Password", style: TextStyle(color: Color(0xFFFFC107))),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text("Enter your email to receive a reset link."),
+            const Text("Enter your email to receive a reset link.", style: TextStyle(color: Colors.white70)),
             const SizedBox(height: 10),
             TextField(
               controller: resetEmailController,
+              style: const TextStyle(color: Colors.white),
               decoration: const InputDecoration(
                 labelText: "Email",
+                labelStyle: TextStyle(color: Colors.white54),
                 border: OutlineInputBorder(),
               ),
               keyboardType: TextInputType.emailAddress,
@@ -95,7 +119,14 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Login')),
+      extendBodyBehindAppBar: true, // Allow body to go behind transparent AppBar
+      appBar: AppBar(
+        title: const Text(''), // Empty setup
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Color(0xFFFFC107)),
+          onPressed: () => context.canPop() ? context.pop() : null,
+        ),
+      ), 
       body: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthAuthenticated) {
@@ -112,8 +143,9 @@ class _LoginPageState extends State<LoginPage> {
             showDialog(
               context: context,
               builder: (context) => AlertDialog(
-                title: const Text('Login Failed'),
-                content: Text(state.message),
+                backgroundColor: const Color(0xFF1E1E1E),
+                title: const Text('Login Failed', style: TextStyle(color: Color(0xFFE53935))),
+                content: Text(state.message, style: const TextStyle(color: Colors.white)),
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
@@ -127,89 +159,162 @@ class _LoginPageState extends State<LoginPage> {
         builder: (context, state) {
           final isLoading = state is AuthLoading;
 
-          return Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text(
-                    'Welcome Back',
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blue,
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-
-                  TextFormField(
-                    controller: _emailController,
-                    decoration: const InputDecoration(
-                      labelText: 'Email',
-                      prefixIcon: Icon(Icons.email),
-                    ),
-                    keyboardType: TextInputType.emailAddress,
-                    enabled: !isLoading,
-                  ),
-                  const SizedBox(height: 16),
-
-                  // ⭐ UPDATED PASSWORD FIELD
-                  TextFormField(
-                    controller: _passwordController,
-                    decoration: InputDecoration(
-                      labelText: 'Password',
-                      prefixIcon: const Icon(Icons.lock),
-                      // Eye Icon Logic
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _isPasswordVisible
-                              ? Icons.visibility
-                              : Icons.visibility_off,
+          return Container(
+            width: double.infinity,
+            height: double.infinity,
+            decoration: const BoxDecoration(
+               color: Color(0xFF121212), // Fallback
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+            child: SlideTransition(
+              position: _slideAnimation,
+              child: Center(
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Logo or Icon
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: const Color(0xFFFFC107).withOpacity(0.1),
                         ),
-                        onPressed: () {
-                          setState(() {
-                            _isPasswordVisible = !_isPasswordVisible;
-                          });
-                        },
+                        child: const Icon(Icons.local_cafe, size: 48, color: Color(0xFFFFC107)),
                       ),
-                    ),
-                    obscureText: !_isPasswordVisible, // Toggle logic
-                    enabled: !isLoading,
-                  ),
+                      const SizedBox(height: 24),
 
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: isLoading ? null : _showForgotPasswordDialog,
-                      child: const Text(
-                        "Forgot Password?",
-                        style: TextStyle(fontWeight: FontWeight.bold),
+                      // Title
+                      const Text(
+                        'Welcome Back',
+                        style: TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFFFFC107), // Golden Yellow
+                          letterSpacing: 1.2,
+                        ),
                       ),
-                    ),
-                  ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Sign in to your gourmet account',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.white54,
+                        ),
+                      ),
+                      const SizedBox(height: 48),
 
-                  const SizedBox(height: 20),
-
-                  ElevatedButton(
-                    onPressed: isLoading ? null : _signIn,
-                    child: isLoading
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.black87,
+                      // Glass-like Container
+                      Container(
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1E1E1E),
+                          borderRadius: BorderRadius.circular(24),
+                          border: Border.all(color: Colors.white10),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.5),
+                              blurRadius: 20,
+                              offset: const Offset(0, 10),
                             ),
-                          )
-                        : const Text('Log In'),
+                          ],
+                        ),
+                        child: Column(
+                          children: [
+                             TextFormField(
+                              controller: _emailController,
+                              style: const TextStyle(color: Colors.white),
+                              decoration: const InputDecoration(
+                                labelText: 'Email',
+                                prefixIcon: Icon(Icons.email_outlined, color: Color(0xFFFFC107)),
+                              ),
+                              keyboardType: TextInputType.emailAddress,
+                              enabled: !isLoading,
+                            ),
+                            const SizedBox(height: 20),
+                            TextFormField(
+                              controller: _passwordController,
+                              style: const TextStyle(color: Colors.white),
+                              decoration: InputDecoration(
+                                labelText: 'Password',
+                                prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFFFFC107)),
+                                suffixIcon: IconButton(
+                                  icon: Icon(
+                                    _isPasswordVisible
+                                        ? Icons.visibility
+                                        : Icons.visibility_off,
+                                    color: Colors.white54,
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      _isPasswordVisible = !_isPasswordVisible;
+                                    });
+                                  },
+                                ),
+                              ),
+                              obscureText: !_isPasswordVisible,
+                              enabled: !isLoading,
+                            ),
+                          ],
+                        ),
+                      ),
+                     
+                      const SizedBox(height: 16),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: isLoading ? null : _showForgotPasswordDialog,
+                          child: const Text(
+                            "Forgot Password?",
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: isLoading ? null : _signIn,
+                          // Use Food Red for Login Button as strict action
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFE53935), 
+                            foregroundColor: Colors.white,
+                          ),
+                          child: isLoading
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Text('LOG IN'),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      TextButton(
+                        onPressed: isLoading ? null : () => context.push('/signup'),
+                        child: RichText(
+                          text: const TextSpan(
+                            text: 'Don\'t have an account? ',
+                            style: TextStyle(color: Colors.white54),
+                            children: [
+                              TextSpan(
+                                text: 'Sign Up',
+                                style: TextStyle(
+                                  color: Color(0xFFFFC107),
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 24),
-                  TextButton(
-                    onPressed: isLoading ? null : () => context.push('/signup'),
-                    child: const Text('Don\'t have an account? Sign Up'),
-                  ),
-                ],
+                ),
               ),
             ),
           );

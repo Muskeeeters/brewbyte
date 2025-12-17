@@ -81,28 +81,24 @@ class _MyProfileEditScreenState extends State<MyProfileEditScreen> {
     try {
       String? newImageUrl;
 
-      // 1. Agar nayi image select ki hai
       if (_selectedXFile != null) {
-        // A. Purani Image Delete karein (Agar hai to)
         if (_currentImageUrl != null && _currentImageUrl!.isNotEmpty) {
           await _uploadService.deleteFile(
-            'image', // Correct Bucket Name
+            'image', 
             'profiles',
             _currentImageUrl!,
           );
         }
 
-        // B. Nayi Upload karein
         newImageUrl = await _uploadService.uploadImage(
           _selectedXFile!,
-          'image', // Correct Bucket Name
+          'image', 
           'profiles',
         );
 
         if (newImageUrl == null) throw Exception("Upload returned null.");
       }
 
-      // 2. Database Update
       await UserService.updateSelfProfile(
         userId: currentUser.id,
         fullName: _nameController.text.trim(),
@@ -110,19 +106,21 @@ class _MyProfileEditScreenState extends State<MyProfileEditScreen> {
         imageUrl: newImageUrl,
       );
 
-      // 3. Success Steps
-      authBloc.add(AuthRefreshRequested()); // <--- YE ZAROORI HAI
+      authBloc.add(AuthRefreshRequested());
 
       messenger.showSnackBar(
-        const SnackBar(content: Text('Profile updated successfully')),
+        const SnackBar(
+            content: Text('Profile updated successfully'),
+            backgroundColor: Color(0xFFFFC107),
+        ),
       );
       navigator.pop();
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        );
       }
     }
   }
@@ -134,33 +132,46 @@ class _MyProfileEditScreenState extends State<MyProfileEditScreen> {
         return MemoryImage(_selectedImageBytes!); // Preview new
       }
       if (_currentImageUrl != null && _currentImageUrl!.isNotEmpty) {
-        return NetworkImage(_currentImageUrl!); // Show old
+        return NetworkImage("${_currentImageUrl!}?t=${DateTime.now().millisecondsSinceEpoch}"); // Show old
       }
       return null;
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('My Profile')),
+      appBar: AppBar(
+        title: const Text('My Profile', style: TextStyle(color: Color(0xFFFFC107))),
+        centerTitle: true,
+        backgroundColor: Colors.transparent,
+        iconTheme: const IconThemeData(color: Color(0xFFFFC107)),
+      ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(24.0),
         child: Form(
           key: _formKey,
           child: Column(
             children: [
+              // Avatar
               Center(
                 child: Stack(
                   children: [
-                    CircleAvatar(
-                      radius: 60,
-                      backgroundColor: Colors.grey[300],
-                      backgroundImage: getImageProvider(),
-                      child: getImageProvider() == null
-                          ? const Icon(
-                              Icons.person,
-                              size: 60,
-                              color: Colors.grey,
-                            )
-                          : null,
+                    Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: const Color(0xFFFFC107), width: 2),
+                      ),
+                      child: CircleAvatar(
+                        radius: 60,
+                        backgroundColor: const Color(0xFF2C2C2C),
+                        backgroundImage: getImageProvider(),
+                        child: getImageProvider() == null
+                            ? const Icon(
+                                Icons.person,
+                                size: 60,
+                                color: Colors.grey,
+                              )
+                            : null,
+                      ),
                     ),
                     Positioned(
                       bottom: 0,
@@ -170,9 +181,9 @@ class _MyProfileEditScreenState extends State<MyProfileEditScreen> {
                         child: Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: Theme.of(context).primaryColor,
+                            color: const Color(0xFFFFC107),
                             shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 2),
+                            border: Border.all(color: Colors.black, width: 2),
                           ),
                           child: const Icon(
                             Icons.camera_alt,
@@ -185,27 +196,34 @@ class _MyProfileEditScreenState extends State<MyProfileEditScreen> {
                   ],
                 ),
               ),
-              const SizedBox(height: 30),
+              const SizedBox(height: 40),
 
-              _buildReadOnlyField("Email", _emailController),
+              _buildReadOnlyField("Email", _emailController, Icons.email_outlined),
               const SizedBox(height: 16),
-              _buildReadOnlyField("Role", _roleController),
+              _buildReadOnlyField("Role", _roleController, Icons.verified_user_outlined),
               const SizedBox(height: 16),
-              _buildReadOnlyField("Registration Number", _regNumController),
+              _buildReadOnlyField("Registration Number", _regNumController, Icons.badge_outlined),
               const SizedBox(height: 32),
 
-              const Text(
-                "Editable Information",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  "Edit Information",
+                  style: TextStyle(
+                      fontSize: 18, 
+                      fontWeight: FontWeight.bold, 
+                      color: Color(0xFFFFC107)
+                  ),
+                ),
               ),
               const SizedBox(height: 16),
 
               TextFormField(
                 controller: _nameController,
+                style: const TextStyle(color: Colors.white),
                 decoration: const InputDecoration(
                   labelText: 'Full Name',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.person),
+                  prefixIcon: Icon(Icons.person_outline, color: Color(0xFFFFC107)),
                 ),
                 validator: (value) => value!.isEmpty ? 'Enter name' : null,
               ),
@@ -213,10 +231,10 @@ class _MyProfileEditScreenState extends State<MyProfileEditScreen> {
 
               TextFormField(
                 controller: _phoneController,
+                style: const TextStyle(color: Colors.white),
                 decoration: const InputDecoration(
                   labelText: 'Phone Number',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.phone),
+                  prefixIcon: Icon(Icons.phone_outlined, color: Color(0xFFFFC107)),
                 ),
                 validator: (value) => value!.isEmpty ? 'Enter phone' : null,
               ),
@@ -224,22 +242,17 @@ class _MyProfileEditScreenState extends State<MyProfileEditScreen> {
 
               SizedBox(
                 width: double.infinity,
-                height: 50,
+                height: 54, // Pill height
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _saveProfile,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).primaryColor,
-                    foregroundColor: Colors.black,
-                  ),
+                  // Style is inherited from Theme (Yellow Pill)
                   child: _isLoading
-                      ? const CircularProgressIndicator()
-                      : const Text(
-                          'Save Changes',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                      ? const SizedBox(
+                          height: 24,
+                          width: 24,
+                          child: CircularProgressIndicator(color: Colors.black),
+                        )
+                      : const Text('SAVE CHANGES'),
                 ),
               ),
             ],
@@ -249,16 +262,21 @@ class _MyProfileEditScreenState extends State<MyProfileEditScreen> {
     );
   }
 
-  Widget _buildReadOnlyField(String label, TextEditingController controller) {
+  Widget _buildReadOnlyField(String label, TextEditingController controller, IconData icon) {
     return TextFormField(
       controller: controller,
       readOnly: true,
       enabled: false,
+      style: const TextStyle(color: Colors.white70),
       decoration: InputDecoration(
         labelText: label,
-        border: const OutlineInputBorder(),
+        prefixIcon: Icon(icon, color: Colors.white38),
         filled: true,
-        fillColor: Colors.grey.shade200,
+        fillColor: const Color(0xFF1E1E1E), // Darker BG for read-only
+        border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(30),
+            borderSide: BorderSide.none,
+        ),
       ),
     );
   }

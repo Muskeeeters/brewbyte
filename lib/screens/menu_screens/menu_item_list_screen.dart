@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 import '../../models/menu_item_model.dart';
 import '../../services/menu_service.dart';
 import 'add_menu_item_screen.dart';
-// Note: ProductDetailScreen import ki zaroorat nahi agar hum context.push('/product_detail') use karein
 
 class MenuItemListScreen extends StatefulWidget {
   final String menuId;
@@ -43,14 +42,26 @@ class _MenuItemListScreenState extends State<MenuItemListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: Text(widget.menuName),
-        backgroundColor: Colors.brown,
-        foregroundColor: Colors.white,
+        title: Text(widget.menuName, style: const TextStyle(fontWeight: FontWeight.bold)),
+        centerTitle: true,
+        backgroundColor: Colors.transparent,
+        foregroundColor: const Color(0xFFFFC107),
+        elevation: 0,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.black.withOpacity(0.9), Colors.transparent],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
+          ),
+        ),
       ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.brown,
-        child: const Icon(Icons.add, color: Colors.white),
+        backgroundColor: const Color(0xFFFFC107),
+        child: const Icon(Icons.add, color: Colors.black),
         onPressed: () async {
           await Navigator.push(
             context,
@@ -59,46 +70,107 @@ class _MenuItemListScreenState extends State<MenuItemListScreen> {
           _refreshItems();
         },
       ),
-      body: FutureBuilder<List<MenuItemModel>>(
-        future: _itemsFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
-          if (!snapshot.hasData || snapshot.data!.isEmpty) return const Center(child: Text("No items found."));
+      body: Container(
+        decoration: const BoxDecoration(
+          color: Color(0xFF121212),
+        ),
+        child: FutureBuilder<List<MenuItemModel>>(
+          future: _itemsFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+               return const Center(child: CircularProgressIndicator(color: Color(0xFFFFC107)));
+            }
+            if (!snapshot.hasData || snapshot.data!.isEmpty) {
+               return const Center(child: Text("No items found.", style: TextStyle(color: Colors.white54)));
+            }
 
-          final items = snapshot.data!;
-          return ListView.builder(
-            itemCount: items.length,
-            padding: const EdgeInsets.all(10),
-            itemBuilder: (context, index) {
-              final item = items[index];
-              final bool hasImage = item.imageUrl != null && item.imageUrl!.isNotEmpty;
+            final items = snapshot.data!;
+            return ListView.builder(
+              itemCount: items.length,
+              padding: const EdgeInsets.fromLTRB(16, 100, 16, 80),
+              itemBuilder: (context, index) {
+                final item = items[index];
+                final bool hasImage = item.imageUrl != null && item.imageUrl!.isNotEmpty;
 
-              return Card(
-                child: ListTile(
-                  onTap: () {
-                    // Navigate to Product Detail using Route
-                    context.push('/product_detail', extra: item);
-                  },
-                  leading: hasImage 
-                    ? Image.network(item.imageUrl!, width: 50, height: 50, fit: BoxFit.cover)
-                    : const Icon(Icons.fastfood),
-                  title: Text(item.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: Text(item.description),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text("Rs ${item.price.toInt()}", style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
-                      IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () => _deleteItem(item.id!),
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1E1E1E),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.white10),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
                       ),
                     ],
                   ),
-                ),
-              );
-            },
-          );
-        },
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    onTap: () {
+                      context.push('/product_detail', extra: item);
+                    },
+                    leading: Hero(
+                      tag: 'food_${item.id}',
+                      child: Container(
+                        width: 60,
+                        height: 60,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                          color: Colors.grey[800],
+                          image: hasImage 
+                             ? DecorationImage(
+                                 image: NetworkImage("${item.imageUrl!}?t=${DateTime.now().millisecondsSinceEpoch}"),
+                                 fit: BoxFit.cover,
+                               )
+                             : null,
+                        ),
+                        child: !hasImage 
+                           ? const Icon(Icons.fastfood, color: Colors.white54)
+                           : null,
+                      ),
+                    ),
+                    title: Text(
+                      item.name, 
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold, 
+                        color: Colors.white,
+                        fontSize: 16,
+                      ),
+                    ),
+                    subtitle: Text(
+                       item.description,
+                       maxLines: 2,
+                       overflow: TextOverflow.ellipsis,
+                       style: const TextStyle(color: Colors.white54),
+                    ),
+                    trailing: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          "Rs ${item.price.toInt()}", 
+                          style: const TextStyle(
+                            color: Color(0xFFFFC107), 
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          )
+                        ),
+                        const SizedBox(height: 4),
+                        // Only show delete if authorized? Assuming view logic is secure or universal for now
+                        InkWell(
+                          onTap: () => _deleteItem(item.id!),
+                          child: const Icon(Icons.delete_outline, color: Color(0xFFE53935), size: 20),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            );
+          },
+        ),
       ),
     );
   }

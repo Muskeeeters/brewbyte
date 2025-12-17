@@ -21,10 +21,8 @@ class _ManageAllProfilesScreenState extends State<ManageAllProfilesScreen> {
     // RBAC Check: Security Guard
     final state = context.read<AuthBloc>().state;
     if (state is! AuthAuthenticated || state.user.role != 'manager') {
-      // Delay redirect to avoid build errors
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        // Redirect unauthorized users
-        const SnackBar(content: Text('Unauthorized access.'));
+        const SnackBar(content: Text('Unauthorized access.', style: TextStyle(color: Colors.white)));
         Navigator.of(context).pop(); 
       });
     }
@@ -46,14 +44,20 @@ class _ManageAllProfilesScreenState extends State<ManageAllProfilesScreen> {
       
       if (mounted) {
          ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Updated ${user.fullName} to $newRole')),
+          SnackBar(
+            content: Text('Updated ${user.fullName} to $newRole'),
+            backgroundColor: const Color(0xFFFFC107),
+          ),
         );
-        _loadProfiles(); // Refresh list to reflect changes
+        _loadProfiles(); 
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to update role: $e')),
+          SnackBar(
+            content: Text('Failed to update role: $e'),
+            backgroundColor: const Color(0xFFE53935),
+          ),
         );
       }
     }
@@ -61,13 +65,17 @@ class _ManageAllProfilesScreenState extends State<ManageAllProfilesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Determine current user ID to prevent editing self-role if needed, 
-    // or just to highlight.
-    final currentUser = (context.read<AuthBloc>().state as AuthAuthenticated).user;
+    // Determine current user ID
+    final currentUserState = context.read<AuthBloc>().state;
+    final currentUser = (currentUserState is AuthAuthenticated) ? currentUserState.user : null;
+
+    if (currentUser == null) return const SizedBox.shrink();
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Manage Profiles'),
+        title: const Text('Manage Profiles', style: TextStyle(color: Color(0xFFFFC107))),
+        backgroundColor: Colors.transparent,
+        iconTheme: const IconThemeData(color: Color(0xFFFFC107)),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -79,11 +87,11 @@ class _ManageAllProfilesScreenState extends State<ManageAllProfilesScreen> {
         future: _profilesFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(child: CircularProgressIndicator(color: Color(0xFFFFC107)));
           } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
+            return Center(child: Text('Error: ${snapshot.error}', style: const TextStyle(color: Colors.red)));
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text('No profiles found.'));
+            return const Center(child: Text('No profiles found.', style: TextStyle(color: Colors.white54)));
           }
 
           final users = snapshot.data!;
@@ -91,49 +99,81 @@ class _ManageAllProfilesScreenState extends State<ManageAllProfilesScreen> {
           return ListView.separated(
             padding: const EdgeInsets.all(16),
             itemCount: users.length,
-            separatorBuilder: (context, index) => const Divider(),
+            separatorBuilder: (context, index) => const SizedBox(height: 12),
             itemBuilder: (context, index) {
               final user = users[index];
               final isSelf = user.id == currentUser.id;
 
-              return ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: isSelf 
-                    ? Theme.of(context).primaryColor 
-                    : Colors.grey.shade300,
-                  foregroundColor: Colors.black,
-                  child: Text(user.fullName[0].toUpperCase()),
+              return Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1E1E1E),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: isSelf ? const Color(0xFFFFC107) : Colors.white10),
                 ),
-                title: Text(
-                  user.fullName + (isSelf ? ' (You)' : ''),
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(user.email),
-                    Text("Reg: ${user.regNumber}"),
-                  ],
-                ),
-                trailing: DropdownButton<String>(
-                  value: _validRoles.contains(user.role) ? user.role : null,
-                  hint: Text(user.role),
-                  onChanged: (newValue) {
-                     // Confirm dialog could be good here, but for now direct update
-                     _updateRole(user, newValue);
-                  },
-                  items: _validRoles.map<DropdownMenuItem<String>>((String value) {
-                    return DropdownMenuItem<String>(
-                      value: value,
-                      child: Text(
-                        value.toUpperCase(),
-                        style: TextStyle(
-                          color: value == 'manager' ? Colors.red : Colors.black,
-                          fontWeight: value == 'manager' ? FontWeight.bold : FontWeight.normal,
-                        ),
-                      ),
-                    );
-                  }).toList(),
+                child: ListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  leading: Hero(
+                    tag: 'profile_${user.id}',
+                    child: CircleAvatar(
+                      backgroundColor: isSelf 
+                        ? const Color(0xFFFFC107) 
+                        : const Color(0xFF2C2C2C),
+                      foregroundColor: isSelf ? Colors.black : Colors.white,
+                      backgroundImage: (user.imageUrl != null && user.imageUrl!.isNotEmpty)
+                          ? NetworkImage("${user.imageUrl!}?t=${DateTime.now().millisecondsSinceEpoch}")
+                          : null,
+                      child: (user.imageUrl == null || user.imageUrl!.isEmpty)
+                         ? Text(user.fullName[0].toUpperCase())
+                         : null,
+                    ),
+                  ),
+                  title: Text(
+                    user.fullName + (isSelf ? ' (You)' : ''),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: isSelf ? const Color(0xFFFFC107) : Colors.white
+                    ),
+                  ),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(user.email, style: const TextStyle(color: Colors.white54)),
+                      Text("Reg: ${user.regNumber}", style: const TextStyle(color: Colors.white38, fontSize: 12)),
+                    ],
+                  ),
+                  trailing: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2C2C2C),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.white10),
+                    ),
+                    child: DropdownButton<String>(
+                      value: _validRoles.contains(user.role) ? user.role : null,
+                      hint: Text(user.role, style: const TextStyle(color: Colors.white)),
+                      dropdownColor: const Color(0xFF2C2C2C),
+                      underline: const SizedBox(), // Remove underline
+                      icon: const Icon(Icons.arrow_drop_down, color: Color(0xFFFFC107)),
+                      onChanged: (newValue) {
+                         _updateRole(user, newValue);
+                      },
+                      items: _validRoles.map<DropdownMenuItem<String>>((String value) {
+                        return DropdownMenuItem<String>(
+                          value: value,
+                          child: Text(
+                            value.toUpperCase(),
+                            style: TextStyle(
+                              color: value == 'manager' 
+                                  ? const Color(0xFFFFC107) // Yellow for Manager role
+                                  : Colors.white,
+                              fontWeight: value == 'manager' ? FontWeight.bold : FontWeight.normal,
+                              fontSize: 12,
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
                 ),
               );
             },

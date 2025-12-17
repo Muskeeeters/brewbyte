@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/auth/auth_bloc.dart';
 import 'login_page.dart';
-import 'home_page.dart';
+import '../screens/home_screen.dart'; // 🆕 Updated Import
 
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
@@ -12,7 +12,7 @@ class AuthGate extends StatelessWidget {
     return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, state) {
         if (state is AuthAuthenticated) {
-          return const HomePage();
+          return const HomeScreen(); // 🆕 Updated Widget
         } else if (state is AuthUnauthenticated) {
           return const LoginPage();
         } else if (state is AuthLoading) {
