@@ -13,7 +13,10 @@ class ManageAllProfilesScreen extends StatefulWidget {
 
 class _ManageAllProfilesScreenState extends State<ManageAllProfilesScreen> {
   late Future<List<UserModel>> _profilesFuture;
-  final List<String> _validRoles = ['customer', 'manager', 'staff']; // Define roles as needed
+  
+  // ⭐ CHANGED: Removed 'staff' and 'customer'. 
+  // Now matches your Signup page options exactly.
+  final List<String> _validRoles = ['student', 'manager']; 
 
   @override
   void initState() {
@@ -65,7 +68,7 @@ class _ManageAllProfilesScreenState extends State<ManageAllProfilesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Determine current user ID
+    // Determine current user ID to identify "(You)"
     final currentUserState = context.read<AuthBloc>().state;
     final currentUser = (currentUserState is AuthAuthenticated) ? currentUserState.user : null;
 
@@ -123,8 +126,8 @@ class _ManageAllProfilesScreenState extends State<ManageAllProfilesScreen> {
                           ? NetworkImage("${user.imageUrl!}?t=${DateTime.now().millisecondsSinceEpoch}")
                           : null,
                       child: (user.imageUrl == null || user.imageUrl!.isEmpty)
-                         ? Text(user.fullName[0].toUpperCase())
-                         : null,
+                          ? Text(user.fullName.isNotEmpty ? user.fullName[0].toUpperCase() : '?')
+                          : null,
                     ),
                   ),
                   title: Text(
@@ -138,7 +141,8 @@ class _ManageAllProfilesScreenState extends State<ManageAllProfilesScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(user.email, style: const TextStyle(color: Colors.white54)),
-                      Text("Reg: ${user.regNumber}", style: const TextStyle(color: Colors.white38, fontSize: 12)),
+                      if (user.regNumber.isNotEmpty)
+                        Text("Reg: ${user.regNumber}", style: const TextStyle(color: Colors.white38, fontSize: 12)),
                     ],
                   ),
                   trailing: Container(
@@ -149,10 +153,18 @@ class _ManageAllProfilesScreenState extends State<ManageAllProfilesScreen> {
                       border: Border.all(color: Colors.white10),
                     ),
                     child: DropdownButton<String>(
+                      // If the user's current role isn't in our valid list (e.g., they were 'staff'), 
+                      // set value to null so the hint displays instead.
                       value: _validRoles.contains(user.role) ? user.role : null,
-                      hint: Text(user.role, style: const TextStyle(color: Colors.white)),
+                      
+                      // This ensures we see the current role even if it's weird/old
+                      hint: Text(
+                        user.role.toUpperCase(), 
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)
+                      ),
+                      
                       dropdownColor: const Color(0xFF2C2C2C),
-                      underline: const SizedBox(), // Remove underline
+                      underline: const SizedBox(), 
                       icon: const Icon(Icons.arrow_drop_down, color: Color(0xFFFFC107)),
                       onChanged: (newValue) {
                          _updateRole(user, newValue);
@@ -164,7 +176,7 @@ class _ManageAllProfilesScreenState extends State<ManageAllProfilesScreen> {
                             value.toUpperCase(),
                             style: TextStyle(
                               color: value == 'manager' 
-                                  ? const Color(0xFFFFC107) // Yellow for Manager role
+                                  ? const Color(0xFFFFC107) // Yellow for Manager
                                   : Colors.white,
                               fontWeight: value == 'manager' ? FontWeight.bold : FontWeight.normal,
                               fontSize: 12,
