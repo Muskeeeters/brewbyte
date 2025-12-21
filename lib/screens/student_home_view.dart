@@ -75,7 +75,36 @@ class _StudentHomeViewState extends State<StudentHomeView> {
                             IconButton(
                               icon: const Icon(Icons.logout, color: Colors.white70),
                               onPressed: () {
-                                context.read<AuthBloc>().add(AuthLogoutRequested());
+                                showDialog(
+                                  context: context,
+                                  builder: (context) => AlertDialog(
+                                    backgroundColor: const Color(0xFF1E1E1E),
+                                    title: const Text(
+                                      "Logout?", 
+                                      style: TextStyle(color: Color(0xFFFFC107))
+                                    ),
+                                    content: const Text(
+                                      "Are you sure you want to log out?",
+                                      style: TextStyle(color: Colors.white70)
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(context),
+                                        child: const Text("Cancel"),
+                                      ),
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.pop(context);
+                                          context.read<AuthBloc>().add(AuthLogoutRequested());
+                                        },
+                                        child: const Text(
+                                          "Logout", 
+                                          style: TextStyle(color: Color(0xFFE53935))
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
                               },
                             ),
                           ],

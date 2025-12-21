@@ -152,8 +152,8 @@ class _AddMenuItemScreenState extends State<AddMenuItemScreen> {
                         onTap: _pickImage,
                         borderRadius: BorderRadius.circular(16),
                         child: Container(
-                          height: 180,
-                          width: double.infinity,
+                          height: 150,
+                          width: 150,
                           decoration: BoxDecoration(
                             color: const Color(0xFF2C2C2C),
                             borderRadius: BorderRadius.circular(16),

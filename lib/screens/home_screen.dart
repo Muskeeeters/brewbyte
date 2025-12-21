@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../bloc/auth/auth_bloc.dart';
 import '../models/user_model.dart';
 import 'student_home_view.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' as supabase_flutter;
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -95,10 +96,50 @@ class _PulsingLoadingIndicatorState extends State<_PulsingLoadingIndicator>
   }
 }
 
-class _ManagerDashboard extends StatelessWidget {
+class _ManagerDashboard extends StatefulWidget {
   final UserModel user;
 
   const _ManagerDashboard({required this.user});
+
+  @override
+  State<_ManagerDashboard> createState() => _ManagerDashboardState();
+}
+
+class _ManagerDashboardState extends State<_ManagerDashboard> {
+  late final supabase_flutter.RealtimeChannel _ordersChannel;
+
+  @override
+  void initState() {
+    super.initState();
+    // Use the Supabase client to listen to the 'orders' table
+    _ordersChannel = supabase_flutter.Supabase.instance.client
+        .channel('public:orders')
+        .onPostgresChanges(
+          event: supabase_flutter.PostgresChangeEvent.insert,
+          schema: 'public',
+          table: 'orders',
+          callback: (payload) {
+            // Check if mounted to avoid errors if user navigated away
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('🔔 New Order Received!'),
+                  backgroundColor: Color(0xFFE53935), // Manager Red
+                  behavior: SnackBarBehavior.floating,
+                  duration: Duration(seconds: 4),
+                ),
+              );
+            }
+          },
+        )
+        .subscribe();
+  }
+
+  @override
+  void dispose() {
+    supabase_flutter.Supabase.instance.client.removeChannel(_ordersChannel);
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -150,7 +191,36 @@ class _ManagerDashboard extends StatelessWidget {
                           IconButton(
                             icon: const Icon(Icons.logout, color: Colors.white70),
                             onPressed: () {
-                              context.read<AuthBloc>().add(AuthLogoutRequested());
+                              showDialog(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  backgroundColor: const Color(0xFF1E1E1E),
+                                  title: const Text(
+                                    "Logout?", 
+                                    style: TextStyle(color: Color(0xFFFFC107))
+                                  ),
+                                  content: const Text(
+                                    "Are you sure you want to log out?",
+                                    style: TextStyle(color: Colors.white70)
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(context),
+                                      child: const Text("Cancel"),
+                                    ),
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.pop(context);
+                                        context.read<AuthBloc>().add(AuthLogoutRequested());
+                                      },
+                                      child: const Text(
+                                        "Logout", 
+                                        style: TextStyle(color: Color(0xFFE53935))
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
                             },
                           ),
                         ],
@@ -159,7 +229,7 @@ class _ManagerDashboard extends StatelessWidget {
 
                     // Middle: Avatar
                     Hero(
-                      tag: 'profile_${user.id}',
+                      tag: 'profile_${widget.user.id}',
                       child: Container(
                         padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
@@ -176,12 +246,12 @@ class _ManagerDashboard extends StatelessWidget {
                         child: CircleAvatar(
                           radius: 50,
                           backgroundColor: const Color(0xFF2C2C2C),
-                          backgroundImage: (user.imageUrl != null && user.imageUrl!.isNotEmpty)
-                              ? NetworkImage(user.imageUrl!)
+                          backgroundImage: (widget.user.imageUrl != null && widget.user.imageUrl!.isNotEmpty)
+                              ? NetworkImage(widget.user.imageUrl!)
                               : null,
-                          child: (user.imageUrl == null || user.imageUrl!.isEmpty)
+                          child: (widget.user.imageUrl == null || widget.user.imageUrl!.isEmpty)
                               ? Text(
-                                  user.fullName.isNotEmpty ? user.fullName[0].toUpperCase() : '?',
+                                  widget.user.fullName.isNotEmpty ? widget.user.fullName[0].toUpperCase() : '?',
                                   style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: Colors.white),
                                 )
                               : null,
@@ -205,7 +275,7 @@ class _ManagerDashboard extends StatelessWidget {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            user.fullName,
+                            widget.user.fullName,
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 32,

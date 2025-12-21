@@ -142,12 +142,17 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
             context.go('/home');
           }
           if (state is AuthError) {
+            String errorMessage = state.message;
+            if (errorMessage.toLowerCase().contains("invalid login credentials")) {
+              errorMessage = "Invalid email or password. Please try again.";
+            }
+
             showDialog(
               context: context,
               builder: (context) => AlertDialog(
                 backgroundColor: const Color(0xFF1E1E1E),
                 title: const Text('Login Failed', style: TextStyle(color: Color(0xFFE53935))),
-                content: Text(state.message, style: const TextStyle(color: Colors.white)),
+                content: Text(errorMessage, style: const TextStyle(color: Colors.white)),
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
