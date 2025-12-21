@@ -3,69 +3,48 @@ import '../models/menu_model.dart';
 import '../models/menu_item_model.dart';
 
 class MenuService {
+  // Supabase Client ka instance
   final _supabase = Supabase.instance.client;
 
-  // --- MENUS (Categories) ---
+  // --- MENUS (Categories like Hot Coffee, Bakery) ---
 
+  // 1. Get all Menus
   Future<List<MenuModel>> getMenus() async {
     final response = await _supabase.from('menus').select();
+    
     final data = response as List<dynamic>;
     return data.map((json) => MenuModel.fromJson(json)).toList();
   }
 
+  // 2. Add New Menu
   Future<void> addMenu(MenuModel menu) async {
     await _supabase.from('menus').insert(menu.toJson());
   }
 
+  // 3. Delete Menu
   Future<void> deleteMenu(String id) async {
     await _supabase.from('menus').delete().eq('id', id);
   }
 
-  // --- MENU ITEMS (Food) ---
+  // --- MENU ITEMS (Food Items) ---
 
+  // 4. Get Items for a specific Menu
   Future<List<MenuItemModel>> getItemsByMenu(String menuId) async {
     final response = await _supabase
         .from('menu_items')
         .select()
-        .eq('menu_id', menuId)
-        .order('name', ascending: true); // Added sorting
+        .eq('menu_id', menuId); 
 
     final data = response as List<dynamic>;
     return data.map((json) => MenuItemModel.fromJson(json)).toList();
   }
   
+  // 5. Add Menu Item (Ab ye Image URL bhi save karega via toJson)
   Future<void> addMenuItem(MenuItemModel item) async {
     await _supabase.from('menu_items').insert(item.toJson());
   }
 
-  // ⭐ NEW: UPDATE FUNCTION ⭐
-  Future<void> updateMenuItem({
-    required String id,
-    required String name,
-    required String description,
-    required double price,
-    String? imageUrl, // Optional: Only if image is changed
-  }) async {
-    
-    // 1. Data prepare
-    final Map<String, dynamic> updates = {
-      'name': name,
-      'description': description,
-      'price': price,
-    };
-
-    // 2. If new image, update URL
-    if (imageUrl != null) {
-      updates['image_url'] = imageUrl;
-    }
-
-    // 3. Update query
-    await _supabase
-        .from('menu_items')
-        .update(updates)
-        .eq('id', id);
-  }
-
+  // 6. Delete Menu Item
   Future<void> deleteMenuItem(String id) async {
     await _supabase.from('menu_items').delete().eq('id', id);
   }

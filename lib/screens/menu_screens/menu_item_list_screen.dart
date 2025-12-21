@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_bloc/flutter_bloc.dart'; // Import Bloc
 import 'package:go_router/go_router.dart';
-import '../../bloc/auth/auth_bloc.dart';
+import '../../bloc/auth/auth_bloc.dart'; // Import AuthBloc
 import '../../models/menu_item_model.dart';
 import '../../services/menu_service.dart';
 import 'add_menu_item_screen.dart';
@@ -87,7 +87,9 @@ class _MenuItemListScreenState extends State<MenuItemListScreen> {
         },
       ) : null,
       body: Container(
-        decoration: const BoxDecoration(color: Color(0xFF121212)),
+        decoration: const BoxDecoration(
+          color: Color(0xFF121212),
+        ),
         child: FutureBuilder<List<MenuItemModel>>(
           future: _itemsFuture,
           builder: (context, snapshot) {
@@ -112,6 +114,13 @@ class _MenuItemListScreenState extends State<MenuItemListScreen> {
                     color: const Color(0xFF1E1E1E),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(color: Colors.white10),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
                   child: ListTile(
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -138,38 +147,42 @@ class _MenuItemListScreenState extends State<MenuItemListScreen> {
                            : null,
                       ),
                     ),
-                    title: Text(item.name, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-                    subtitle: Text(item.description, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white54)),
-                    trailing: isManager
-                      ? Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            // ⭐ EDIT BUTTON
-                            IconButton(
-                              icon: const Icon(Icons.edit, color: Colors.blue),
-                              onPressed: () async {
-                                await Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => AddMenuItemScreen(
-                                      menuId: widget.menuId,
-                                      existingItem: item, // Pass item here
-                                    ),
-                                  ),
-                                );
-                                _refreshItems();
-                              },
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.delete_outline, color: Color(0xFFE53935)),
-                              onPressed: () => _deleteItem(item.id!),
-                            ),
-                          ],
-                        )
-                      : Text(
+                    title: Text(
+                      item.name, 
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold, 
+                        color: Colors.white,
+                        fontSize: 16,
+                      ),
+                    ),
+                    subtitle: Text(
+                       item.description,
+                       maxLines: 2,
+                       overflow: TextOverflow.ellipsis,
+                       style: const TextStyle(color: Colors.white54),
+                    ),
+                    trailing: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
                           "Rs ${item.price.toInt()}", 
-                          style: const TextStyle(color: Color(0xFFFFC107), fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                            color: Color(0xFFFFC107), 
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          )
                         ),
+                        // Only show delete if Manager
+                        if (isManager) ...[
+                          const SizedBox(height: 4),
+                          InkWell(
+                            onTap: () => _deleteItem(item.id!),
+                            child: const Icon(Icons.delete_outline, color: Color(0xFFE53935), size: 20),
+                          ),
+                        ]
+                      ],
+                    ),
                   ),
                 );
               },
