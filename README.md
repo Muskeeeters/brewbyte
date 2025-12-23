@@ -59,7 +59,7 @@ lib/
 
 1.  **Clone the repository:**
     ```bash
-    git clone https://github.com/yourusername/brewbyte.git
+    git clone https://github.com/Muskeeeters/brewbyte
     cd brewbyte
     ```
 
@@ -88,5 +88,3 @@ lib/
 *   `image_picker`: ^1.2.1
 
 ---
-
-*Built with ❤️ and ☕ by the BrewByte Team.*
