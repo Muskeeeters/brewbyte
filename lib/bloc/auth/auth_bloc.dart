@@ -5,6 +5,7 @@ import '../../models/user_model.dart'; // Import Zaroori hai
 part 'auth_event.dart';
 part 'auth_state.dart';
 
+// Provider Class (State Management)
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   AuthBloc() : super(AuthInitial()) {
     on<AuthCheckStatus>(_onCheckStatus);

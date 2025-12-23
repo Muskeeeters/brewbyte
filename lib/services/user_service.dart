@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/user_model.dart';
 
+// Database Layer Class
 class UserService {
   static final supabase = Supabase.instance.client;
 
